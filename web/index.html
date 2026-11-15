@@ -1039,11 +1039,13 @@
   }
 
   function loadRandomBoard() {
-    // Alternate between scenario 5 (clean random) and scenario 6 (random with misread)
     const sel = document.getElementById("scenario-sel");
-    const nextVal = (sel.value === "5") ? "6" : "5";
-    sel.value = nextVal;
-    loadScenario(nextVal);
+    let target = sel.value;
+    if (target !== "5" && target !== "6") {
+      target = "5";
+      sel.value = "5";
+    }
+    loadScenario(target);
   }
 
   function clearS3Queue() {
