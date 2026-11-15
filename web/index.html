@@ -3,1443 +3,1408 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Handwritten Sudoku Reader & Solver | Technical Architecture & System Trace</title>
+  <title>Handwritten Sudoku Reader &amp; Solver</title>
   <style>
+    /* ============================================================
+       BASE TOKENS  –  warm neutral palette, not AI-blue
+       ============================================================ */
     :root {
-      --bg-dark: #090d16;
-      --card-bg: #131b2e;
-      --card-inner: #0b1120;
-      --card-border: #1e293b;
-      --border-highlight: #334155;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --primary: #38bdf8;
-      --primary-hover: #0284c7;
-      --accent-green: #22c55e;
-      --accent-red: #ef4444;
-      --accent-amber: #f59e0b;
-      --cell-empty-bg: #131b2e;
-      --cell-empty-text: #475569;
-      --cell-clue-bg: #0369a1;
-      --cell-clue-text: #e0f2fe;
-      --cell-conflict-bg: #991b1b;
-      --cell-conflict-text: #fecaca;
-      --cell-fixed-bg: #b45309;
-      --cell-fixed-text: #fef3c7;
-      --cell-solved-bg: #15803d;
-      --cell-solved-text: #dcfce7;
+      --bg:          #f4f1eb;      /* warm off-white */
+      --bg-alt:      #ede9e0;
+      --panel:       #ffffff;
+      --panel-shadow: 0 1px 4px rgba(0,0,0,.12);
+      --border:      #d4cfc5;
+      --text:        #2b2821;
+      --muted:       #6b6560;
+      --heading:     #1c1a17;
+
+      /* step colours */
+      --step1:   #2e6e4e;   /* deep green  – NN */
+      --step2:   #7a3b1e;   /* burnt sienna – AC-3 */
+      --step3:   #5a3a7e;   /* plum – A* */
+      --step4:   #1e4a6e;   /* slate blue – CSP */
+
+      /* cell states */
+      --cell-bg:       #f9f7f3;
+      --cell-border:   #c9c3b8;
+      --cell-clue:     #dbe8f5;
+      --cell-clue-txt: #1e3a52;
+      --cell-conflict: #fde8e8;
+      --cell-conflict-txt: #7a1515;
+      --cell-fixed:    #fdf4e0;
+      --cell-fixed-txt:#704d00;
+      --cell-solved:   #e6f4ee;
+      --cell-solved-txt:#1b5934;
+
+      /* status */
+      --ok:    #2e6e4e;
+      --warn:  #7a3b1e;
+      --info:  #5a3a7e;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background-color: var(--bg-dark);
-      color: var(--text-main);
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Georgia", "Times New Roman", serif;
+      font-size: 15px;
+      line-height: 1.6;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
     }
 
+    /* ---- HEADER ---- */
     header {
-      background-color: #060911;
-      border-bottom: 1px solid var(--card-border);
+      background: var(--panel);
+      border-bottom: 2px solid var(--border);
       padding: 1rem 2rem;
       display: flex;
+      align-items: flex-start;
       justify-content: space-between;
-      align-items: center;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: .75rem;
     }
-
-    .title-area h1 {
-      font-size: 1.35rem;
+    .hdr-title h1 {
+      font-size: 1.3rem;
       font-weight: 700;
-      color: var(--primary);
-      letter-spacing: -0.02em;
+      font-family: "Georgia", serif;
+      color: var(--heading);
+      letter-spacing: 0;
     }
-
-    .title-area p {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 0.2rem;
+    .hdr-title p {
+      font-size: .82rem;
+      color: var(--muted);
+      font-family: sans-serif;
+      margin-top: .15rem;
     }
-
-    .header-badges {
+    .hdr-info {
       display: flex;
-      gap: 0.5rem;
       flex-wrap: wrap;
+      gap: .4rem;
+      align-items: center;
+      font-family: monospace;
+      font-size: .78rem;
     }
-
-    .badge {
-      background: #1e293b;
-      border: 1px solid var(--card-border);
-      padding: 0.35rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--primary);
+    .info-chip {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      padding: .2rem .6rem;
+      border-radius: 4px;
+      color: var(--muted);
     }
+    .info-chip.live  { border-color: var(--ok); color: var(--ok); font-weight: 700; }
+    .info-chip.cache { border-color: #a05c20; color: #a05c20; font-weight: 700; }
 
-    main {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 490px 1fr;
-      gap: 1.5rem;
-      padding: 1.5rem 2rem;
-      max-width: 1650px;
+    /* ---- LAYOUT ---- */
+    .page-wrap {
+      max-width: 1440px;
       margin: 0 auto;
-      width: 100%;
+      padding: 1.25rem 1.5rem;
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 1050px) {
+      .page-wrap { grid-template-columns: 1fr; }
     }
 
-    @media (max-width: 1150px) {
-      main {
-        grid-template-columns: 1fr;
-      }
+    /* ---- PANELS ---- */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: var(--panel-shadow);
+      padding: 1rem 1.1rem;
+    }
+    .panel-title {
+      font-size: .9rem;
+      font-weight: 700;
+      font-family: sans-serif;
+      color: var(--heading);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: .5rem;
+      margin-bottom: .9rem;
     }
 
-    .card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-    }
-
-    .board-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .board-header {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .board-header h2 {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
+    /* ---- BOARD ---- */
+    .board-wrap { display: flex; flex-direction: column; align-items: center; gap: .75rem; }
     .sudoku-grid {
       display: grid;
-      grid-template-columns: repeat(9, 46px);
-      grid-template-rows: repeat(9, 46px);
-      gap: 1px;
-      background-color: #060911;
-      padding: 6px;
-      border-radius: 8px;
-      border: 3px solid #475569;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+      grid-template-columns: repeat(9, 1fr);
+      border: 2px solid var(--text);
+      width: 360px;
+      height: 360px;
     }
-
     .cell {
+      border: 1px solid var(--cell-border);
+      background: var(--cell-bg);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.25rem;
-      font-weight: 700;
-      background-color: var(--cell-empty-bg);
-      color: var(--cell-empty-text);
-      border-radius: 3px;
+      font-size: 1.1rem;
+      font-family: "Georgia", serif;
       cursor: pointer;
-      transition: all 0.25s ease;
-      user-select: none;
-      position: relative;
+      transition: background .15s;
+      color: var(--muted);
     }
+    .cell:hover { filter: brightness(.93); }
+    .cell.br { border-right: 2px solid var(--text); }
+    .cell.bb { border-bottom: 2px solid var(--text); }
 
-    .cell:hover {
-      filter: brightness(1.25);
-    }
+    .cell.c-clue      { background: var(--cell-clue);     color: var(--cell-clue-txt);     font-weight: 700; }
+    .cell.c-conflict  { background: var(--cell-conflict);  color: var(--cell-conflict-txt); font-weight: 700; }
+    .cell.c-fixed     { background: var(--cell-fixed);     color: var(--cell-fixed-txt);    font-weight: 700; }
+    .cell.c-solved    { background: var(--cell-solved);    color: var(--cell-solved-txt);   font-weight: 700; }
 
-    /* 3x3 Block Divider Borders */
-    .cell.border-right-thick {
-      border-right: 3px solid #64748b;
-    }
-    .cell.border-bottom-thick {
-      border-bottom: 3px solid #64748b;
-    }
+    /* legend */
+    .legend { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; }
+    .leg { font-size: .72rem; font-family: sans-serif; padding: .2rem .6rem; border-radius: 3px; }
+    .leg-clue     { background: var(--cell-clue);     color: var(--cell-clue-txt); }
+    .leg-conflict { background: var(--cell-conflict);  color: var(--cell-conflict-txt); }
+    .leg-fixed    { background: var(--cell-fixed);     color: var(--cell-fixed-txt); }
+    .leg-solved   { background: var(--cell-solved);    color: var(--cell-solved-txt); }
 
-    /* Cell states */
-    .cell.state-clue {
-      background-color: var(--cell-clue-bg);
-      color: var(--cell-clue-text);
-    }
-
-    .cell.state-conflict {
-      background-color: var(--cell-conflict-bg);
-      color: var(--cell-conflict-text);
-      animation: pulse-red 1.2s infinite;
-    }
-
-    .cell.state-fixed {
-      background-color: var(--cell-fixed-bg);
-      color: var(--cell-fixed-text);
-      animation: pop-yellow 0.4s ease;
-    }
-
-    .cell.state-solved {
-      background-color: var(--cell-solved-bg);
-      color: var(--cell-solved-text);
-      animation: fade-green 0.3s ease;
-    }
-
-    @keyframes pulse-red {
-      0%, 100% { transform: scale(1); filter: brightness(1); }
-      50% { transform: scale(1.05); filter: brightness(1.3); }
-    }
-
-    @keyframes pop-yellow {
-      0% { transform: scale(0.85); }
-      70% { transform: scale(1.1); }
-      100% { transform: scale(1); }
-    }
-
-    @keyframes fade-green {
-      from { opacity: 0.2; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .legend-bar {
+    /* ---- CONTROLS ---- */
+    .controls {
       display: flex;
-      gap: 0.5rem;
-      width: 100%;
-      margin-top: 1rem;
-    }
-
-    .legend-item {
-      flex: 1;
-      text-align: center;
-      padding: 0.4rem 0.2rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border-radius: 6px;
-    }
-
-    .legend-clue { background: var(--cell-clue-bg); color: var(--cell-clue-text); }
-    .legend-conflict { background: var(--cell-conflict-bg); color: var(--cell-conflict-text); }
-    .legend-fixed { background: var(--cell-fixed-bg); color: var(--cell-fixed-text); }
-    .legend-solved { background: var(--cell-solved-bg); color: var(--cell-solved-text); }
-
-    .cell-hint {
-      margin-top: 0.8rem;
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      text-align: center;
-    }
-
-    /* Controls & Navigation */
-    .controls-card {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .top-controls {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
       flex-wrap: wrap;
-      background: var(--card-inner);
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      border: 1px solid var(--card-border);
-    }
-
-    .select-wrapper {
-      display: flex;
+      gap: .5rem;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-muted);
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      padding: .6rem .8rem;
+      border-radius: 5px;
+      font-family: sans-serif;
     }
-
+    .controls label { font-size: .82rem; color: var(--muted); }
     select {
-      background: #1e293b;
-      color: var(--text-main);
-      border: 1px solid var(--card-border);
-      padding: 0.45rem 0.75rem;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      outline: none;
-      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      padding: .3rem .5rem;
+      border-radius: 4px;
+      font-size: .82rem;
+      max-width: 240px;
     }
-
-    button {
-      padding: 0.45rem 0.9rem;
-      border-radius: 6px;
-      border: none;
-      font-size: 0.85rem;
+    .btn {
+      padding: .35rem .85rem;
+      border-radius: 4px;
+      border: 1px solid;
+      font-size: .82rem;
+      font-family: sans-serif;
       font-weight: 600;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      transition: all 0.2s ease;
+      transition: opacity .15s;
     }
+    .btn:hover { opacity: .82; }
+    .btn-step    { background: var(--text);    color: var(--bg);    border-color: var(--text); }
+    .btn-run     { background: var(--step4);   color: #fff;         border-color: var(--step4); }
+    .btn-reset   { background: var(--panel);   color: var(--muted); border-color: var(--border); }
 
-    .btn-primary { background: #0284c7; color: white; }
-    .btn-primary:hover { background: #0369a1; }
-    .btn-success { background: #16a34a; color: white; }
-    .btn-success:hover { background: #15803d; }
-    .btn-secondary { background: #475569; color: white; }
-    .btn-secondary:hover { background: #334155; }
-    .btn-outline { background: transparent; border: 1px solid var(--card-border); color: var(--text-muted); }
-    .btn-outline:hover { background: #1e293b; color: var(--text-main); }
-    .btn-outline.active { background: #0284c7; color: white; border-color: #0284c7; }
-
-    /* Metrics Bar */
-    .metrics-bar {
+    /* ---- METRICS BAR ---- */
+    .metrics {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 0.75rem;
+      gap: .5rem;
+      font-family: sans-serif;
     }
-
     .metric-box {
-      background: var(--card-inner);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 0.6rem 0.75rem;
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .4rem .6rem;
       text-align: center;
     }
+    .metric-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .metric-value { font-size: 1.1rem; font-weight: 700; font-family: monospace; color: var(--heading); margin-top: .1rem; }
 
-    .metric-label {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .metric-value {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--primary);
-      margin-top: 0.15rem;
-    }
-
-    /* Tab switcher */
-    .tab-bar {
-      display: flex;
-      gap: 0.5rem;
-      border-bottom: 1px solid var(--card-border);
-      padding-bottom: 0.5rem;
-    }
-
-    /* Explanation & Data Area */
-    .explanation-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: var(--card-inner);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
+    /* ---- STEP CARDS ---- */
+    .step-card {
+      border: 1px solid var(--border);
+      border-radius: 5px;
       overflow: hidden;
-      min-height: 380px;
+      font-family: sans-serif;
     }
-
-    .expl-header {
-      padding: 0.65rem 1rem;
-      background: #0f172a;
-      border-bottom: 1px solid var(--card-border);
+    .step-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--primary);
+      gap: .75rem;
+      padding: .65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
     }
+    .step-header:hover { background: var(--bg-alt); }
+    .step-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .step-num.s1 { background: var(--step1); }
+    .step-num.s2 { background: var(--step2); }
+    .step-num.s3 { background: var(--step3); }
+    .step-num.s4 { background: var(--step4); }
 
-    .tab-view {
+    .step-title-block { flex: 1; }
+    .step-title-block strong { font-size: .88rem; color: var(--heading); }
+    .step-title-block span  { font-size: .78rem; color: var(--muted); display: block; margin-top: .05rem; }
+    .step-badge {
+      font-size: .7rem;
+      padding: .15rem .5rem;
+      border-radius: 3px;
+      font-weight: 700;
+      background: var(--bg-alt);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .step-badge.pending { color: var(--muted); }
+    .step-badge.running { background: #fdf4e0; color: #704d00; border-color: #d4b56a; }
+    .step-badge.done    { background: var(--cell-solved); color: var(--cell-solved-txt); border-color: #8ecfab; }
+    .step-badge.error   { background: var(--cell-conflict); color: var(--cell-conflict-txt); border-color: #e8a4a4; }
+
+    .step-body {
+      padding: .85rem 1rem;
       display: none;
-      padding: 1rem;
-      overflow-y: auto;
-      max-height: 420px;
+      background: var(--panel);
     }
+    .step-body.open { display: block; }
 
-    .tab-view.active {
-      display: block;
+    /* step body content */
+    .goal-box {
+      background: var(--bg-alt);
+      border-left: 3px solid var(--border);
+      padding: .5rem .75rem;
+      margin-bottom: .9rem;
+      border-radius: 0 4px 4px 0;
+      font-size: .82rem;
+      color: var(--muted);
     }
+    .goal-box strong { color: var(--heading); display: block; margin-bottom: .2rem; }
 
-    /* Monospace analytical text blocks */
-    .tech-block {
-      background: #080c14;
-      border: 1px solid var(--card-border);
-      border-radius: 6px;
-      padding: 0.85rem;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.84rem;
-      line-height: 1.55;
-      color: #cbd5e1;
-      margin-bottom: 0.85rem;
-      white-space: pre-wrap;
-    }
+    .s1 .goal-box { border-color: var(--step1); }
+    .s2 .goal-box { border-color: var(--step2); }
+    .s3 .goal-box { border-color: var(--step3); }
+    .s4 .goal-box { border-color: var(--step4); }
 
-    .tech-block strong.highlight-blue { color: var(--primary); }
-    .tech-block strong.highlight-red { color: var(--accent-red); }
-    .tech-block strong.highlight-amber { color: var(--accent-amber); }
-    .tech-block strong.highlight-green { color: var(--accent-green); }
-
-    /* Tables */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.82rem;
-      margin-bottom: 1rem;
-    }
-
-    th, td {
-      padding: 0.55rem 0.75rem;
-      text-align: left;
-      border-bottom: 1px solid var(--card-border);
-    }
-
-    th {
-      background: #0f172a;
-      color: var(--text-muted);
-      font-weight: 600;
-      position: sticky;
-      top: 0;
-      z-index: 5;
-    }
-
-    tr:hover td {
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    .tag-danger {
-      background: rgba(239, 68, 68, 0.2);
-      color: var(--accent-red);
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
+    .output-title {
+      font-size: .78rem;
       font-weight: 700;
-      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+      margin-bottom: .4rem;
     }
 
-    .tag-success {
-      background: rgba(34, 197, 94, 0.2);
-      color: var(--accent-green);
-      padding: 0.15rem 0.45rem;
+    /* prob bars */
+    .prob-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin-bottom: .2rem;
+      font-family: monospace;
+      font-size: .8rem;
+    }
+    .prob-row .dname { width: 48px; color: var(--muted); }
+    .prob-track { flex: 1; height: 10px; background: var(--bg-alt); border-radius: 3px; overflow: hidden; }
+    .prob-fill  { height: 100%; border-radius: 3px; transition: width .4s ease; }
+    .prob-row .pval  { width: 48px; text-align: right; color: var(--heading); font-weight: 700; }
+    .pf-top      { background: var(--step1); }
+    .pf-alt      { background: var(--step3); }
+    .pf-other    { background: var(--border); }
+
+    /* table styles */
+    table { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: .8rem; }
+    th { background: var(--bg-alt); color: var(--muted); font-weight: 600; padding: .4rem .6rem; text-align: left; border-bottom: 1px solid var(--border); position: sticky; top: 0; }
+    td { padding: .35rem .6rem; border-bottom: 1px solid var(--bg-alt); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-alt); }
+    .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 4px; max-height: 320px; overflow-y: auto; }
+
+    .tag-warn { background: #fdf4e0; color: #704d00; padding: .1rem .4rem; border-radius: 3px; font-size: .72rem; font-weight: 700; }
+    .tag-ok   { background: var(--cell-solved); color: var(--cell-solved-txt); padding: .1rem .4rem; border-radius: 3px; font-size: .72rem; font-weight: 700; }
+    .tag-err  { background: var(--cell-conflict); color: var(--cell-conflict-txt); padding: .1rem .4rem; border-radius: 3px; font-size: .72rem; font-weight: 700; }
+
+    /* arc/conflict list */
+    .conflict-row {
+      display: flex;
+      align-items: flex-start;
+      gap: .6rem;
+      border-left: 3px solid var(--step2);
+      padding: .4rem .6rem;
+      margin-bottom: .4rem;
+      background: #fdf5f0;
+      border-radius: 0 4px 4px 0;
+      font-family: sans-serif;
+      font-size: .82rem;
+    }
+    .conflict-row .cicon { font-size: 1rem; }
+    .conflict-row .ctext { flex: 1; }
+    .conflict-row .ctext strong { font-size: .84rem; color: #7a3b1e; display: block; }
+    .conflict-row .ctext span  { font-size: .78rem; color: var(--muted); }
+
+    /* search steps */
+    .search-row {
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      gap: .5rem;
+      align-items: start;
+      padding: .5rem .6rem;
+      border: 1px solid var(--border);
       border-radius: 4px;
-      font-weight: 700;
-      font-size: 0.72rem;
+      margin-bottom: .4rem;
+      font-family: sans-serif;
+      font-size: .82rem;
+      background: var(--panel);
     }
+    .search-row.sr-fail { border-color: #d4b56a; background: #fdf9f0; }
+    .search-row.sr-ok   { border-color: #8ecfab; background: #f0faf3; }
+    .sr-iter { font-weight: 700; color: var(--muted); font-family: monospace; padding-top: .05rem; }
+    .sr-state { flex: 1; }
+    .sr-state strong { display: block; color: var(--heading); font-size: .82rem; }
+    .sr-state .sf { font-size: .77rem; color: var(--muted); font-family: monospace; }
+    .sr-verdict { font-weight: 700; font-size: .78rem; white-space: nowrap; }
+    .vf  { color: var(--cell-conflict-txt); }
+    .vok { color: var(--cell-solved-txt); }
 
-    .tag-warning {
-      background: rgba(245, 158, 11, 0.2);
-      color: var(--accent-amber);
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
-      font-weight: 700;
-      font-size: 0.72rem;
-    }
-
-    /* Modal / Inspector Dialog */
-    .modal-overlay {
+    /* modal */
+    .modal-bg {
       display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(4px);
-      z-index: 1000;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 999;
       align-items: center;
       justify-content: center;
       padding: 1rem;
     }
-
+    .modal-bg.open { display: flex; }
     .modal-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      max-width: 600px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      max-width: 520px;
       width: 100%;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 8px 30px rgba(0,0,0,.2);
     }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
+    .modal-hdr {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); padding-bottom: .6rem; margin-bottom: .9rem;
     }
-
-    .modal-header h3 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--primary);
-    }
-
+    .modal-hdr h3 { font-family: sans-serif; font-size: 1rem; font-weight: 700; }
     .close-btn {
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 1.25rem;
-      padding: 0.2rem 0.5rem;
+      background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--muted);
     }
-    .close-btn:hover { color: var(--text-main); }
+    .close-btn:hover { color: var(--text); }
 
-    /* Probability bar */
-    .prob-bar-container {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin: 0.35rem 0;
-      font-size: 0.8rem;
+    /* payload pre */
+    pre.payload {
+      background: #1c1a17;
+      color: #d4cfc5;
+      border-radius: 5px;
+      padding: .9rem;
+      font-size: .75rem;
+      max-height: 320px;
+      overflow: auto;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.45;
     }
 
-    .prob-label { width: 50px; font-weight: 600; color: var(--text-muted); }
-    .prob-bar-track { flex: 1; height: 10px; background: #0f172a; border-radius: 5px; overflow: hidden; }
-    .prob-bar-fill { height: 100%; border-radius: 5px; transition: width 0.3s ease; }
-    .prob-val { width: 45px; text-align: right; font-weight: 700; font-family: monospace; }
+    /* solved board small */
+    .solved-grid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      border: 1px solid var(--text);
+      width: 100%;
+      max-width: 290px;
+    }
+    .sc { border: 1px solid var(--border); font-size: .78rem; font-family: "Georgia", serif;
+          text-align: center; padding: .2rem 0; color: var(--muted); }
+    .sc.scg { color: var(--cell-clue-txt); font-weight: 700; background: var(--cell-clue); }
+    .sc.scf { color: var(--cell-fixed-txt); font-weight: 700; background: var(--cell-fixed); }
+    .sc.scs { color: var(--cell-solved-txt); font-weight: 700; background: var(--cell-solved); }
+    .sc.scbr { border-right: 1px solid var(--text); }
+    .sc.scbb { border-bottom: 1px solid var(--text); }
+
+    /* tab strip */
+    .tab-strip { display: flex; gap: .3rem; flex-wrap: wrap; margin-bottom: .8rem; }
+    .tab-btn {
+      padding: .3rem .75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg-alt);
+      color: var(--muted);
+      font-size: .78rem;
+      font-family: sans-serif;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .tab-btn:hover { background: var(--border); }
+    .tab-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    .gap { margin-top: .7rem; }
+    .small { font-size: .78rem; color: var(--muted); font-family: sans-serif; }
+    .mono { font-family: monospace; }
+
+    /* board status pill */
+    #board-pill {
+      font-family: sans-serif; font-size: .75rem; font-weight: 700;
+      padding: .2rem .7rem; border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--bg-alt);
+      color: var(--muted);
+    }
+    .pill-s1 { background: #e8f4ee; color: var(--step1); border-color: #8ecfab; }
+    .pill-s2 { background: var(--cell-conflict); color: var(--cell-conflict-txt); border-color: #e8a4a4; }
+    .pill-s3 { background: #fdf4e0; color: #704d00; border-color: #d4b56a; }
+    .pill-s4 { background: var(--cell-solved); color: var(--cell-solved-txt); border-color: #8ecfab; }
+
+    .hint { font-size: .75rem; font-family: sans-serif; color: var(--muted); text-align: center; }
+
+    .sep { height: 1px; background: var(--border); margin: .75rem 0; }
+
+    code { font-family: monospace; background: var(--bg-alt); padding: .05rem .3rem; border-radius: 3px; font-size: .88em; }
+
+    /* right column stacked panels */
+    .right-col { display: flex; flex-direction: column; gap: .9rem; }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="title-area">
-      <h1>HANDWRITTEN SUDOKU READER & SOLVER</h1>
-      <p>Coupled Neural Inference + AC-3 Constraint Propagation + A* Heuristic Search</p>
-    </div>
-    <div class="header-badges">
-      <span id="connection-badge" class="badge" style="color: var(--accent-green); border-color: var(--accent-green);">Engine: Connecting...</span>
-      <span class="badge">Dataset: MNIST (1–9)</span>
-      <span class="badge">Model: Calibrated NN</span>
-      <span class="badge">Test Acc: 97.97%</span>
-      <span class="badge">T = 1.000 (ECE = 0.0089)</span>
-    </div>
-  </header>
+<header>
+  <div class="hdr-title">
+    <h1>Handwritten Sudoku Reader &amp; Solver</h1>
+    <p>Neural Network digit inference &middot; AC-3 arc consistency &middot; A* search &middot; CSP forward checking</p>
+  </div>
+  <div class="hdr-info">
+    <span class="info-chip" id="conn-chip">Engine: connecting...</span>
+    <span class="info-chip">MNIST digits 1&ndash;9</span>
+    <span class="info-chip">Test acc 97.97%</span>
+    <span class="info-chip">ECE 0.0089</span>
+  </div>
+</header>
 
-  <main>
-    <!-- Left Column: The 9x9 Sudoku Board -->
-    <div class="card board-card">
-      <div class="board-header">
-        <h2>9x9 Sudoku Board Visualizer</h2>
-        <span id="board-status-badge" class="badge" style="color: var(--text-muted);">Step 0/4: Initialized</span>
-      </div>
+<div class="page-wrap">
 
-      <div class="sudoku-grid" id="grid">
-        <!-- Cells generated via JavaScript -->
-      </div>
+  <!-- =====================  LEFT COLUMN  ===================== -->
+  <div style="display:flex;flex-direction:column;gap:.9rem;">
 
-      <div class="legend-bar">
-        <div class="legend-item legend-clue">Given Clue</div>
-        <div class="legend-item legend-conflict">Conflict (AC-3)</div>
-        <div class="legend-item legend-fixed">Corrected (A*)</div>
-        <div class="legend-item legend-solved">Solved (CSP)</div>
+    <!-- Board Panel -->
+    <div class="panel board-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:.5rem;">
+        <span class="panel-title" style="border:none;padding:0;margin:0;">Sudoku Board</span>
+        <span id="board-pill">Waiting</span>
       </div>
-
-      <div class="cell-hint">
-        💡 Tip: Click on any cell in the 9x9 grid to inspect its full probability distribution and peers.
+      <div class="sudoku-grid" id="grid"></div>
+      <div class="legend">
+        <span class="leg leg-clue">Given clue</span>
+        <span class="leg leg-conflict">AC-3 conflict</span>
+        <span class="leg leg-fixed">A* correction</span>
+        <span class="leg leg-solved">CSP filled</span>
       </div>
+      <p class="hint">Click any filled cell to inspect its full probability distribution.</p>
     </div>
 
-    <!-- Right Column: Control Panel, Metrics, and Deep System Trace -->
-    <div class="card controls-card">
-      <div class="top-controls">
-        <div class="select-wrapper">
-          <label for="scenario-select">Scenario:</label>
-          <select id="scenario-select" onchange="loadScenario(this.value)">
-            <option value="1">Scenario 1: Single Misread at (0, 0) [Ambiguous 5 vs 6]</option>
-            <option value="2">Scenario 2: Two Misreads at (0, 0) and (0, 4)</option>
-            <option value="3">Scenario 3: Perfect Clues (Direct Solve)</option>
-            <option value="4">Scenario 4: Challenging 25-Clue Board (Pruning Benchmark)</option>
-          </select>
-        </div>
-
-        <button class="btn-primary" onclick="advanceStep()">Next Step ▶</button>
-        <button class="btn-success" onclick="runAllSteps()">Run All ⚡</button>
-        <button class="btn-secondary" onclick="resetCurrentScenario()">Reset 🔄</button>
+    <!-- Controls Panel -->
+    <div class="panel">
+      <div class="panel-title">Test Scenario</div>
+      <div class="controls" style="margin-bottom:.6rem;">
+        <label>Scenario:</label>
+        <select id="scenario-sel" onchange="loadScenario(this.value)">
+          <option value="1">Scenario 1 &mdash; One misread clue at cell (0,0)</option>
+          <option value="2">Scenario 2 &mdash; Two misread clues at (0,0) and (0,4)</option>
+          <option value="3">Scenario 3 &mdash; Perfect reading, no misreads</option>
+          <option value="4">Scenario 4 &mdash; Sparse 25-clue benchmark puzzle</option>
+        </select>
+        <button class="btn btn-step"  onclick="advanceStep()">Next Step &rarr;</button>
+        <button class="btn btn-run"   onclick="runAll()">Run All</button>
+        <button class="btn btn-reset" onclick="resetScenario()">Reset</button>
       </div>
-
-      <!-- Real-time metrics bar -->
-      <div class="metrics-bar">
-        <div class="metric-box">
-          <div class="metric-label">CURRENT STAGE</div>
-          <div class="metric-value" id="metric-stage">0 / 4</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">SEARCH NODES</div>
-          <div class="metric-value" id="metric-nodes">0</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">CSP BACKTRACKS</div>
-          <div class="metric-value" id="metric-backtracks">0</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">ELAPSED TIME</div>
-          <div class="metric-value" id="metric-time">0.0 ms</div>
-        </div>
+      <div class="metrics">
+        <div class="metric-box"><div class="metric-label">Stage</div><div class="metric-value" id="m-stage">0 / 4</div></div>
+        <div class="metric-box"><div class="metric-label">A* Nodes</div><div class="metric-value" id="m-nodes">—</div></div>
+        <div class="metric-box"><div class="metric-label">CSP Backtracks</div><div class="metric-value" id="m-bt">—</div></div>
+        <div class="metric-box"><div class="metric-label">Time</div><div class="metric-value" id="m-time">—</div></div>
       </div>
+    </div>
 
-      <!-- Tab Switcher -->
-      <div class="tab-bar">
-        <button class="btn-outline active" id="tab-btn-trace" onclick="switchTab('trace')">Execution Trace</button>
-        <button class="btn-outline" id="tab-btn-nn" onclick="switchTab('nn')">Full Model Predictions & Confidence Table</button>
-        <button class="btn-outline" id="tab-btn-search" onclick="switchTab('search')">A* Priority Queue Log</button>
-        <button class="btn-outline" id="tab-btn-csp" onclick="switchTab('csp')">CSP Pruning Comparison</button>
-        <button class="btn-outline" id="tab-btn-api" onclick="switchTab('api')">Live Python API Payload</button>
+    <!-- Raw API Payload -->
+    <div class="panel">
+      <div class="panel-title">Live Python API Payload</div>
+      <p class="small" style="margin-bottom:.5rem;">
+        Raw JSON from <code>http://localhost:8000/api/solve?scenario=N</code>.
+        Every probability here is computed in real time by the trained model on actual MNIST test patches.
+      </p>
+      <pre class="payload" id="api-pre">// Run  python web/server.py  then refresh to see live data.</pre>
+    </div>
+
+  </div><!-- end left col -->
+
+  <!-- =====================  RIGHT COLUMN  ===================== -->
+  <div class="right-col">
+
+    <!-- STEP 1 -->
+    <div class="panel step-card" id="card-s1">
+      <div class="step-header" onclick="toggleCard('s1')">
+        <div class="step-num s1">1</div>
+        <div class="step-title-block">
+          <strong>Neural Network Inference &amp; Confidence Analysis</strong>
+          <span>Run the trained MLP on each filled cell's 28&times;28 image patch</span>
+        </div>
+        <span class="step-badge pending" id="badge-s1">Not run</span>
       </div>
-
-      <!-- Tab View 1: Execution Trace -->
-      <div class="explanation-area">
-        <div class="tab-view active" id="view-trace">
-          <div id="step-trace-content">
-=== SYSTEM INITIALIZATION COMPLETE ===
-Awaiting pipeline step execution.
-Click "Next Step ▶" to walk through:
-  1. Neural Network Inference & Confidence Margin Analysis
-  2. AC-3 Directed Arc Consistency Propagation
-  3. A* State-Space Correction Search with Admissible Heuristic
-  4. Forward Checking CSP Solution of Remaining Variables
-          </div>
+      <div class="step-body" id="body-s1">
+        <div class="goal-box s1">
+          <strong>Why do we need this step?</strong>
+          A scanned Sudoku image gives us raw pixel data, not clean numbers.
+          The neural network reads each handwritten digit cell and outputs a probability
+          for every class 1&ndash;9.  When two classes are nearly tied the model is uncertain
+          &mdash; that uncertainty is exactly what later steps (AC-3 &amp; A*) must resolve.
         </div>
+        <div class="output-title">Model information</div>
+        <div class="small gap" id="s1-model-info">Architecture: MLP 784 &rarr; 256 &rarr; 128 &rarr; 9 &bull; Temperature T=1.000 &bull; ECE=0.0089 &bull; Test accuracy 97.97%</div>
 
-        <!-- Tab View 2: Full NN Predictions Table -->
-        <div class="tab-view" id="view-nn">
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">
-            Full inference report for all classified clues. The <strong>Confidence Margin</strong> is the difference between Top Prediction and Alternative ($P_{\text{top}} - P_{\text{alt}}$). Cells with margin &lt; 0.15 are flagged as ambiguous.
-          </p>
-          <div style="overflow-x: auto;">
-            <table id="nn-predictions-table">
-              <thead>
-                <tr>
-                  <th>Cell (r, c)</th>
-                  <th>Top Class</th>
-                  <th>Top Prob</th>
-                  <th>2nd Alt</th>
-                  <th>Alt Prob</th>
-                  <th>Confidence Margin (Δ)</th>
-                  <th>Uncertainty Status</th>
-                </tr>
-              </thead>
-              <tbody id="nn-predictions-tbody">
-                <!-- Rows injected dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <div class="sep"></div>
 
-        <!-- Tab View 3: A* Priority Queue Log -->
-        <div class="tab-view" id="view-search">
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">
-            Detailed state-space search frontier trace showing node expansions, path cost $g(n)$, heuristic $h(n)$, and evaluation function $f(n) = g(n) + h(n)$.
-          </p>
-          <div style="overflow-x: auto;">
-            <table>
-              <thead>
-                <tr>
-                  <th>Iteration</th>
-                  <th>Popped State (Corrections)</th>
-                  <th>g(n) [Path Cost]</th>
-                  <th>h(n) [Heuristic]</th>
-                  <th>f(n) [Total Cost]</th>
-                  <th>Goal Test (AC-3 Solvability)</th>
-                </tr>
-              </thead>
-              <tbody id="search-trace-tbody">
-                <!-- Search traces injected dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Tab View 4: CSP Pruning Comparison -->
-        <div class="tab-view" id="view-csp">
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">
-            Benchmark comparison of CSP propagation algorithms solving a challenging 25-clue puzzle (Deliverable 12):
-          </p>
-          <table>
+        <div class="output-title">Summary &mdash; all classified cells</div>
+        <div class="tbl-wrap gap">
+          <table id="nn-table">
             <thead>
               <tr>
-                <th>CSP Propagation Strategy</th>
-                <th>Variable Assignments</th>
-                <th>Backtracks</th>
-                <th>Solving Time</th>
-                <th>Pruning Factor</th>
+                <th>Cell</th>
+                <th>Predicted</th>
+                <th>P(top)</th>
+                <th>Runner-up</th>
+                <th>P(alt)</th>
+                <th>Margin &Delta;</th>
+                <th>Status</th>
               </tr>
             </thead>
+            <tbody id="nn-tbody"></tbody>
+          </table>
+        </div>
+        <p class="small gap">Rows sorted narrowest margin first. Click a cell on the board to see its full 9-class distribution.</p>
+
+        <div class="sep"></div>
+
+        <div class="output-title">Flagged high-uncertainty cells (&Delta; &lt; 20%)</div>
+        <div id="s1-alerts"><p class="small">Run step 1 to see alerts.</p></div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="panel step-card" id="card-s2">
+      <div class="step-header" onclick="toggleCard('s2')">
+        <div class="step-num s2">2</div>
+        <div class="step-title-block">
+          <strong>AC-3 Arc Consistency Check</strong>
+          <span>Verify that the current board reading is constraint-satisfiable</span>
+        </div>
+        <span class="step-badge pending" id="badge-s2">Not run</span>
+      </div>
+      <div class="step-body" id="body-s2">
+        <div class="goal-box s2">
+          <strong>Why do we need this step?</strong>
+          Even if the neural network is 97% accurate overall, one wrong digit can make
+          the board impossible to solve.  AC-3 (Arc Consistency Algorithm 3) scans all
+          810 directed arcs in the binary constraint graph.  If two cells in the same row,
+          column, or 3&times;3 box share the same value, the domain of one collapses to empty
+          (&empty;) &mdash; a mathematical proof that the reading is broken and must be corrected
+          before we can fill in the blank cells.
+        </div>
+        <div class="output-title">Constraint network statistics</div>
+        <div class="small gap" id="s2-stats">Variables: 81 &bull; Constraint type: X<sub>i</sub> &ne; X<sub>j</sub> for every peer pair &bull; Directed arcs: 810</div>
+
+        <div class="sep"></div>
+
+        <div class="output-title">Arc revision trace</div>
+        <div id="s2-trace"><p class="small">Run step 2 to see trace.</p></div>
+
+        <div class="sep"></div>
+
+        <div class="output-title">Result</div>
+        <div id="s2-result"><p class="small">—</p></div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="panel step-card" id="card-s3">
+      <div class="step-header" onclick="toggleCard('s3')">
+        <div class="step-num s3">3</div>
+        <div class="step-title-block">
+          <strong>A* State-Space Search &mdash; Minimal-Cost Digit Correction</strong>
+          <span>Find the cheapest set of clue substitutions that removes all conflicts</span>
+        </div>
+        <span class="step-badge pending" id="badge-s3">Not run</span>
+      </div>
+      <div class="step-body" id="body-s3">
+        <div class="goal-box s3">
+          <strong>Why do we need this step?</strong>
+          Once AC-3 identifies conflicts, we know the reading is wrong but not <em>which</em>
+          digit(s) to change.  We model the correction problem as a state-space search:
+          each state is a set of proposed substitutions, the step cost is the
+          confidence penalty <code>c = max(0, P_top &minus; P_new)</code>,
+          and the admissible heuristic sums the minimum correction cost over disjoint
+          conflict pairs (<code>h(n) &le; h*(n)</code>).
+          A* expands nodes in increasing <code>f(n) = g(n) + h(n)</code> order and is
+          guaranteed to find the minimum-penalty correction without exploring unnecessary branches.
+        </div>
+
+        <div class="output-title">Search formulation</div>
+        <div class="small gap">
+          State &mdash; set of <code>((row, col), new_digit)</code> substitutions<br>
+          Cost &mdash; <code>g(n) = &sum; max(0, P_top(cell) &minus; P(new_digit))</code><br>
+          Heuristic &mdash; <code>h(n) = &sum; min cost over disjoint conflict pairs</code><br>
+          Evaluation &mdash; <code>f(n) = g(n) + h(n)</code>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="output-title">Priority queue expansion (iteration-by-iteration)</div>
+        <div id="s3-queue"><p class="small">Run step 3 to see expansion.</p></div>
+
+        <div class="sep"></div>
+
+        <div class="output-title">Optimal corrections found</div>
+        <div id="s3-result"><p class="small">—</p></div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="panel step-card" id="card-s4">
+      <div class="step-header" onclick="toggleCard('s4')">
+        <div class="step-num s4">4</div>
+        <div class="step-title-block">
+          <strong>CSP Forward Checking &mdash; Complete the Puzzle</strong>
+          <span>Assign values to all 51 empty cells using backtracking + forward checking + MRV</span>
+        </div>
+        <span class="step-badge pending" id="badge-s4">Not run</span>
+      </div>
+      <div class="step-body" id="body-s4">
+        <div class="goal-box s4">
+          <strong>Why do we need this step?</strong>
+          After A* has fixed any misread clues, we still have ~51 blank cells.
+          Pure backtracking on 9<sup>51</sup> possibilities is intractable.
+          Forward Checking (FC) shrinks this search drastically: every time we assign
+          a digit to a variable, we immediately remove that digit from the domains of
+          all 20 peer variables.  If any peer domain empties we backtrack immediately,
+          rather than discovering the failure much later.
+          The Minimum Remaining Values (MRV) heuristic picks the variable with the
+          fewest legal values next, reducing branching at the most critical points.
+        </div>
+
+        <div class="output-title">Solver settings</div>
+        <div class="small gap">
+          Algorithm: Backtracking + Forward Checking (FC) + MRV variable ordering<br>
+          Variables: 81 total &bull; Given: <span id="s4-givens">—</span> &bull; Empty: <span id="s4-empty">—</span>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="output-title">Assignment statistics</div>
+        <div class="metrics" style="margin-top:.4rem;" id="s4-metrics">
+          <div class="metric-box"><div class="metric-label">Assignments</div><div class="metric-value" id="s4-assign">—</div></div>
+          <div class="metric-box"><div class="metric-label">Backtracks</div><div class="metric-value" id="s4-bt">—</div></div>
+          <div class="metric-box"><div class="metric-label">Time</div><div class="metric-value" id="s4-time">—</div></div>
+          <div class="metric-box"><div class="metric-label">Status</div><div class="metric-value" id="s4-status">—</div></div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="output-title">Solved board</div>
+        <div id="s4-board" style="margin-top:.5rem;"></div>
+
+        <div class="sep"></div>
+
+        <div class="output-title">Validation audit (27 units)</div>
+        <div id="s4-audit" class="small gap">—</div>
+
+        <div class="sep"></div>
+
+        <div class="output-title">CSP algorithm comparison (25-clue benchmark)</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr><th>Algorithm</th><th>Assignments</th><th>Backtracks</th><th>Time</th><th>Pruning factor</th></tr>
+            </thead>
             <tbody>
-              <tr>
-                <td><strong>Pure Backtracking (BT)</strong></td>
-                <td>2,258</td>
-                <td style="color: var(--accent-red); font-weight: 700;">2,202</td>
-                <td>46.3 ms</td>
-                <td>Baseline (1.0x)</td>
-              </tr>
-              <tr>
-                <td><strong>Backtracking + Forward Checking (FC)</strong></td>
-                <td>99</td>
-                <td style="color: var(--accent-green); font-weight: 700;">43</td>
-                <td>3.5 ms</td>
-                <td style="color: var(--accent-green); font-weight: 700;">51.2x reduction</td>
-              </tr>
-              <tr>
-                <td><strong>AC-3 Pre-check + Forward Checking (AC-3 + FC)</strong></td>
-                <td>99</td>
-                <td style="color: var(--accent-green); font-weight: 700;">43</td>
-                <td>27.4 ms</td>
-                <td style="color: var(--accent-green); font-weight: 700;">51.2x reduction</td>
-              </tr>
+              <tr><td><strong>Pure Backtracking</strong></td><td>2,258</td><td style="color:var(--warn);font-weight:700;">2,202</td><td>46.3 ms</td><td>baseline (1&times;)</td></tr>
+              <tr><td><strong>FC + MRV</strong></td><td>99</td><td style="color:var(--ok);font-weight:700;">43</td><td>3.5 ms</td><td style="color:var(--ok);font-weight:700;">51.2&times; fewer BTs</td></tr>
+              <tr><td><strong>AC-3 pre-check + FC</strong></td><td>99</td><td style="color:var(--ok);font-weight:700;">43</td><td>27.4 ms</td><td style="color:var(--ok);font-weight:700;">51.2&times; fewer BTs</td></tr>
             </tbody>
           </table>
-          <div class="tech-block">
-<strong>Theoretical Pruning Analysis:</strong>
-Pure Backtracking is blind to unassigned variable domain exhaustion; it assigns values sequentially and checks consistency backward only. When an impossible choice is made early, Backtracking explores thousands of failing subtrees before recovering.
-
-Forward Checking (FC) looks forward: each assignment immediately eliminates incompatible values from all 20 peer domains. If any peer domain becomes empty ($\emptyset$), the branch is terminated immediately. This cuts backtracks by over 98% across all benchmark puzzle instances.
-          </div>
-        </div>
-
-        <!-- Tab View 5: Live API Payload -->
-        <div class="tab-view" id="view-api">
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">
-            Raw JSON response payload streamed live from the Python backend (<code>http://localhost:8000/api/solve?scenario=...</code>) executing real neural network inference, AC-3 consistency propagation, and A* state-space search:
-          </p>
-          <pre id="api-json-pre" style="background: #080c14; border: 1px solid var(--card-border); border-radius: 8px; padding: 1rem; font-size: 0.75rem; color: #38bdf8; overflow-x: auto; max-height: 440px; white-space: pre-wrap; word-break: break-all; font-family: 'Consolas', 'Fira Code', monospace; line-height: 1.4;"></pre>
         </div>
       </div>
     </div>
-  </main>
 
-  <!-- Cell Inspector Modal -->
-  <div class="modal-overlay" id="cell-modal" onclick="closeModal(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <h3 id="modal-cell-title">Cell Inspection</h3>
-        <button class="close-btn" onclick="document.getElementById('cell-modal').style.display='none'">✕</button>
-      </div>
-      <div id="modal-cell-body">
-        <!-- Content injected dynamically -->
-      </div>
+  </div><!-- end right col -->
+</div><!-- end page-wrap -->
+
+<!-- =====================  CELL INSPECTOR MODAL  ===================== -->
+<div class="modal-bg" id="modal" onclick="closeModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <h3 id="modal-title">Cell inspector</h3>
+      <button class="close-btn" onclick="document.getElementById('modal').classList.remove('open')">&#10005;</button>
     </div>
+    <div id="modal-body"></div>
   </div>
+</div>
 
-  <script>
-    // =========================================================================
-    // Core Sudoku Grid & Scenario Definitions
-    // =========================================================================
-    const BASE_PUZZLE = [
-      [5, 3, 0, 0, 7, 0, 0, 0, 0],
-      [6, 0, 0, 1, 9, 5, 0, 0, 0],
-      [0, 9, 8, 0, 0, 0, 0, 6, 0],
-      [8, 0, 0, 0, 6, 0, 0, 0, 3],
-      [4, 0, 0, 8, 0, 3, 0, 0, 1],
-      [7, 0, 0, 0, 2, 0, 0, 0, 6],
-      [0, 6, 0, 0, 0, 0, 2, 8, 0],
-      [0, 0, 0, 4, 1, 9, 0, 0, 5],
-      [0, 0, 0, 0, 8, 0, 0, 7, 9]
-    ];
+<script>
+  /* ================================================================
+     CONSTANTS
+  ================================================================ */
+  const BASE = [
+    [5,3,0,0,7,0,0,0,0],
+    [6,0,0,1,9,5,0,0,0],
+    [0,9,8,0,0,0,0,6,0],
+    [8,0,0,0,6,0,0,0,3],
+    [4,0,0,8,0,3,0,0,1],
+    [7,0,0,0,2,0,0,0,6],
+    [0,6,0,0,0,0,2,8,0],
+    [0,0,0,4,1,9,0,0,5],
+    [0,0,0,0,8,0,0,7,9]
+  ];
+  const SOLUTION = [
+    [5,3,4,6,7,8,9,1,2],
+    [6,7,2,1,9,5,3,4,8],
+    [1,9,8,3,4,2,5,6,7],
+    [8,5,9,7,6,1,4,2,3],
+    [4,2,6,8,5,3,7,9,1],
+    [7,1,3,9,2,4,8,5,6],
+    [9,6,1,5,3,7,2,8,4],
+    [2,8,7,4,1,9,6,3,5],
+    [3,4,5,2,8,6,1,7,9]
+  ];
+  const BENCH_SOL = [
+    [9,2,7,3,4,5,8,6,1],[4,8,1,6,7,2,9,3,5],[3,6,5,9,1,8,2,4,7],
+    [7,5,8,4,6,9,3,1,2],[6,9,3,2,5,1,7,8,4],[1,4,2,8,3,7,5,6,9],
+    [2,7,9,1,8,6,4,5,3],[8,3,6,5,2,4,1,7,9],[5,1,4,7,9,3,6,2,8]
+  ];
 
-    const COMPLETE_SOLUTION = [
-      [5, 3, 4, 6, 7, 8, 9, 1, 2],
-      [6, 7, 2, 1, 9, 5, 3, 4, 8],
-      [1, 9, 8, 3, 4, 2, 5, 6, 7],
-      [8, 5, 9, 7, 6, 1, 4, 2, 3],
-      [4, 2, 6, 8, 5, 3, 7, 9, 1],
-      [7, 1, 3, 9, 2, 4, 8, 5, 6],
-      [9, 6, 1, 5, 3, 7, 2, 8, 4],
-      [2, 8, 7, 4, 1, 9, 6, 3, 5],
-      [3, 4, 5, 2, 8, 6, 1, 7, 9]
-    ];
+  /* ================================================================
+     STATE
+  ================================================================ */
+  let gridData      = [];
+  let initialGivens = [];
+  let conflicts     = [];   // [[r,c],...]
+  let corrected     = [];   // [[r,c],...]
+  let solved        = false;
+  let solvedGrid    = null;
+  let inferences    = {};   // "r,c" -> {topDigit, topProb, altDigit, altProb, margin, isAmbiguous, allProbs:{1:p,...}}
+  let liveData      = null;
+  let currentStep   = 0;
+  let currentScenario = "1";
 
-    let currentScenario = "1";
-    let currentStep = 0;
-    let gridData = [];
-    let initialGivens = [];
-    let conflicts = [];
-    let corrections = [];
-    let cellInferences = {}; // Key: "r,c" -> { topDigit, topProb, altDigit, altProb, allProbs: {} }
+  /* ================================================================
+     GRID DOM
+  ================================================================ */
+  function buildGrid() {
+    const g = document.getElementById("grid");
+    g.innerHTML = "";
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        const d = document.createElement("div");
+        d.className = "cell";
+        d.id = `c${r}${c}`;
+        if (c === 2 || c === 5) d.classList.add("br");
+        if (r === 2 || r === 5) d.classList.add("bb");
+        d.onclick = () => openModal(r, c);
+        g.appendChild(d);
+      }
+    }
+  }
 
-    function initGridDOM() {
-      const grid = document.getElementById("grid");
-      grid.innerHTML = "";
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          const cell = document.createElement("div");
-          cell.className = "cell";
-          cell.id = `cell-${r}-${c}`;
-          if (c === 2 || c === 5) cell.classList.add("border-right-thick");
-          if (r === 2 || r === 5) cell.classList.add("border-bottom-thick");
-          cell.onclick = () => openCellInspector(r, c);
-          grid.appendChild(cell);
+  function renderGrid() {
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        const el  = document.getElementById(`c${r}${c}`);
+        const val = gridData[r][c];
+        // reset classes (keep border ones)
+        el.className = "cell" + (c===2||c===5?" br":"") + (r===2||r===5?" bb":"");
+        if (val === 0) { el.textContent = "·"; return; }
+        el.textContent = val;
+        if (conflicts.some(([cr,cc]) => cr===r && cc===c)) {
+          el.classList.add("c-conflict");
+        } else if (corrected.some(([cr,cc]) => cr===r && cc===c)) {
+          el.classList.add("c-fixed");
+        } else if (solved && initialGivens[r][c] === 0) {
+          el.classList.add("c-solved");
+        } else if (initialGivens[r][c] !== 0) {
+          el.classList.add("c-clue");
         }
       }
     }
+  }
 
-    function generateRealisticProbabilities(digit, isAmbiguous = false, altDigit = null) {
-      let probs = {};
-      for (let d = 1; d <= 9; d++) probs[d] = 0.005;
+  /* ================================================================
+     LOAD SCENARIO  (async – tries live server first)
+  ================================================================ */
+  async function loadScenario(id) {
+    currentScenario = id;
+    currentStep     = 0;
+    conflicts       = [];
+    corrected       = [];
+    solved          = false;
+    solvedGrid      = null;
+    inferences      = {};
+    liveData        = null;
 
-      if (isAmbiguous && altDigit) {
-        probs[digit] = 0.524;
-        probs[altDigit] = 0.448;
-        let rem = 1.0 - (0.524 + 0.448);
-        for (let d = 1; d <= 9; d++) {
-          if (d !== digit && d !== altDigit) probs[d] = rem / 7.0;
-        }
-      } else {
-        probs[digit] = 0.982;
-        let rem = 1.0 - 0.982;
-        for (let d = 1; d <= 9; d++) {
-          if (d !== digit) probs[d] = rem / 8.0;
-        }
+    // Reset UI
+    setMeta("0 / 4", "—", "—", "—");
+    setPill("", "Waiting");
+    setBadge("s1","pending","Not run"); setBadge("s2","pending","Not run");
+    setBadge("s3","pending","Not run"); setBadge("s4","pending","Not run");
+
+    const chip = document.getElementById("conn-chip");
+    chip.textContent = "Engine: querying…";
+    chip.className   = "info-chip";
+
+    try {
+      const r = await fetch(`/api/solve?scenario=${id}`);
+      if (r.ok) {
+        liveData = await r.json();
+        chip.textContent = "Engine: live Python server (port 8000)";
+        chip.className   = "info-chip live";
+        document.getElementById("api-pre").textContent = JSON.stringify(liveData, null, 2);
+        applyLive();
+        return;
       }
-      return probs;
+    } catch(_) {}
+
+    // Offline fallback
+    chip.textContent = "Engine: offline (open web/server.py for live data)";
+    chip.className   = "info-chip cache";
+    document.getElementById("api-pre").textContent =
+      "// Server not detected on port 8000.\n// Run:  python web/server.py\n// Then refresh this page to get live neural network outputs.";
+    applyFallback();
+  }
+
+  /* -- map live API data into local state -- */
+  function applyLive() {
+    gridData      = liveData.initial_grid.map(r => [...r]);
+    initialGivens = liveData.initial_grid.map(r => [...r]);
+
+    for (const [k, v] of Object.entries(liveData.cell_inferences)) {
+      inferences[k] = {
+        topDigit:    v.top_digit,
+        topProb:     v.top_prob,
+        altDigit:    v.alt_digit,
+        altProb:     v.alt_prob,
+        margin:      v.margin,
+        isAmbiguous: v.is_ambiguous,
+        allProbs:    v.all_probs
+      };
     }
 
-    let liveBackendData = null;
+    renderGrid();
+    buildNNTable();
+    clearS3Queue();
+  }
 
-    async function loadScenario(scenarioId) {
-      currentScenario = scenarioId;
-      currentStep = 0;
-      conflicts = [];
-      corrections = [];
-      cellInferences = {};
-      liveBackendData = null;
+  /* -- offline fallback data -- */
+  function applyFallback() {
+    gridData = BASE.map(r => [...r]);
 
-      document.getElementById("metric-stage").innerText = "0 / 4";
-      document.getElementById("metric-nodes").innerText = "0";
-      document.getElementById("metric-backtracks").innerText = "0";
-      document.getElementById("metric-time").innerText = "0.0 ms";
-      document.getElementById("board-status-badge").innerText = "Step 0/4: Ready";
-      document.getElementById("board-status-badge").style.color = "var(--text-muted)";
-
-      const connBadge = document.getElementById("connection-badge");
-      if (connBadge) {
-        connBadge.innerText = "Engine: Querying API...";
-        connBadge.style.color = "var(--primary)";
-        connBadge.style.borderColor = "var(--primary)";
-      }
-
-      try {
-        const resp = await fetch(`/api/solve?scenario=${scenarioId}`);
-        if (resp.ok) {
-          const data = await resp.json();
-          liveBackendData = data;
-          applyLiveData(data);
-          return;
-        }
-      } catch (err) {
-        // Server not reachable or opened as local file
-      }
-
-      applyFallbackData(scenarioId);
+    if (currentScenario === "1") gridData[0][0] = 6;
+    else if (currentScenario === "2") { gridData[0][0] = 6; gridData[0][4] = 9; }
+    else if (currentScenario === "4") {
+      gridData = [
+        [0,0,0,3,4,0,0,0,1],[0,8,0,6,0,0,0,3,0],[0,0,5,0,0,8,0,0,0],
+        [0,5,0,4,0,9,0,0,0],[6,0,3,0,0,1,0,0,0],[0,4,2,0,0,0,0,6,0],
+        [2,0,9,0,0,0,0,0,3],[8,0,0,0,0,0,0,0,9],[0,0,0,0,9,0,6,2,0]
+      ];
     }
+    initialGivens = gridData.map(r => [...r]);
 
-    function applyLiveData(data) {
-      const connBadge = document.getElementById("connection-badge");
-      if (connBadge) {
-        connBadge.innerHTML = "🟢 Engine: Live Python Server (Port 8000)";
-        connBadge.style.color = "var(--accent-green)";
-        connBadge.style.borderColor = "var(--accent-green)";
-      }
-
-      gridData = data.initial_grid.map(row => [...row]);
-      initialGivens = data.initial_grid.map(row => [...row]);
-
-      cellInferences = {};
-      for (const [k, v] of Object.entries(data.cell_inferences)) {
-        cellInferences[k] = {
-          topDigit: v.top_digit,
-          topProb: v.top_prob,
-          altDigit: v.alt_digit,
-          altProb: v.alt_prob,
-          margin: v.margin,
-          isAmbiguous: v.is_ambiguous,
-          allProbs: v.all_probs
+    // Build synthetic inferences
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        const v = gridData[r][c];
+        if (v === 0) continue;
+        let isAmb = false, alt = null;
+        if (currentScenario === "1" && r===0 && c===0) { isAmb=true; alt=5; }
+        if (currentScenario === "2" && r===0 && c===0) { isAmb=true; alt=5; }
+        if (currentScenario === "2" && r===0 && c===4) { isAmb=true; alt=7; }
+        const ap = {}; for (let d=1;d<=9;d++) ap[d]=0.001;
+        if (isAmb) { ap[v]=0.535; ap[alt]=0.463; }
+        else        { ap[v]=0.982; const rem=0.018/8; for(let d=1;d<=9;d++) if(d!==v) ap[d]=rem; }
+        const sorted = Object.entries(ap).sort((a,b)=>b[1]-a[1]);
+        inferences[`${r},${c}`] = {
+          topDigit: parseInt(sorted[0][0]), topProb: sorted[0][1],
+          altDigit: parseInt(sorted[1][0]), altProb: sorted[1][1],
+          margin: sorted[0][1]-sorted[1][1], isAmbiguous: isAmb, allProbs: ap
         };
       }
-
-      const apiPre = document.getElementById("api-json-pre");
-      if (apiPre) {
-        apiPre.innerText = JSON.stringify(data, null, 2);
-      }
-
-      populateNNTable();
-      clearSearchLog();
-      renderBoard();
-
-      document.getElementById("step-trace-content").innerHTML = 
-        `<div class="tech-block">` +
-        `<strong>[LIVE BACKEND CONNECTED]: Scenario ${data.scenario_id} loaded directly from Python API.</strong>\n` +
-        `• Architecture:       ${data.model_type}\n` +
-        `• Test Accuracy:      ${(data.test_accuracy * 100).toFixed(2)}% on MNIST (Digits 1–9)\n` +
-        `• Initial Givens:     ${countClues()} clues detected | ${81 - countClues()} empty variables\n` +
-        `• Computational Mode: 100% Real Neural Inference, AC-3 Constraint Propagation & A* Search\n` +
-        `----------------------------------------------------------------------------------------\n` +
-        `Click "Next Step ▶" to walk through the mathematical pipeline, or view the "Live Python API Payload" tab.` +
-        `</div>`;
     }
+    renderGrid();
+    buildNNTable();
+    clearS3Queue();
+  }
 
-    function applyFallbackData(scenarioId) {
-      const connBadge = document.getElementById("connection-badge");
-      if (connBadge) {
-        connBadge.innerHTML = "🟡 Engine: Client Offline Cache";
-        connBadge.style.color = "var(--accent-amber)";
-        connBadge.style.borderColor = "var(--accent-amber)";
-      }
-
-      gridData = BASE_PUZZLE.map(row => [...row]);
-
-      if (scenarioId === "1") {
-        gridData[0][0] = 6;
-      } else if (scenarioId === "2") {
-        gridData[0][0] = 6;
-        gridData[0][4] = 9;
-      } else if (scenarioId === "4") {
-        gridData = [
-          [0, 0, 0, 3, 4, 0, 0, 0, 1],
-          [0, 8, 0, 6, 0, 0, 0, 3, 0],
-          [0, 0, 5, 0, 0, 8, 0, 0, 0],
-          [0, 5, 0, 4, 0, 9, 0, 0, 0],
-          [6, 0, 3, 0, 0, 1, 0, 0, 0],
-          [0, 4, 2, 0, 0, 0, 0, 6, 0],
-          [2, 0, 9, 0, 0, 0, 0, 0, 3],
-          [8, 0, 0, 0, 0, 0, 0, 0, 9],
-          [0, 0, 0, 0, 9, 0, 6, 2, 0]
-        ];
-      }
-
-      initialGivens = gridData.map(row => [...row]);
-
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          const val = gridData[r][c];
-          if (val !== 0) {
-            let isAmb = false;
-            let alt = null;
-
-            if (scenarioId === "1" && r === 0 && c === 0) {
-              isAmb = true; alt = 5;
-            } else if (scenarioId === "2" && r === 0 && c === 0) {
-              isAmb = true; alt = 5;
-            } else if (scenarioId === "2" && r === 0 && c === 4) {
-              isAmb = true; alt = 7;
-            }
-
-            const probs = generateRealisticProbabilities(val, isAmb, alt);
-            const sorted = Object.entries(probs).sort((a, b) => b[1] - a[1]);
-            cellInferences[`${r},${c}`] = {
-              topDigit: parseInt(sorted[0][0]),
-              topProb: sorted[0][1],
-              altDigit: parseInt(sorted[1][0]),
-              altProb: sorted[1][1],
-              margin: sorted[0][1] - sorted[1][1],
-              allProbs: probs,
-              isAmbiguous: isAmb
-            };
-          }
-        }
-      }
-
-      const apiPre = document.getElementById("api-json-pre");
-      if (apiPre) {
-        apiPre.innerText = "// Offline Mode: Python server not currently detected on port 8000.\n// To enable live neural network execution and search tracing, run in your terminal:\n//   python web/server.py\n// Currently displaying pre-computed verified dataset.";
-      }
-
-      populateNNTable();
-      clearSearchLog();
-      renderBoard();
-
-      document.getElementById("step-trace-content").innerHTML = 
-        `<div class="tech-block">` +
-        `<strong>[STATUS]: Scenario ${scenarioId} loaded from embedded offline cache.</strong>\n` +
-        `Initial givens detected: ${countClues()} clues. Empty variables: ${81 - countClues()} cells.\n` +
-        `To connect to the live Python model server, execute: <code>python web/server.py</code> and refresh this page.` +
-        `</div>`;
-    }
-
-    function countClues() {
-      let count = 0;
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          if (gridData[r][c] !== 0) count++;
-        }
-      }
-      return count;
-    }
-
-    function renderBoard() {
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          const cellEl = document.getElementById(`cell-${r}-${c}`);
-          const val = gridData[r][c];
-          cellEl.className = "cell";
-          if (c === 2 || c === 5) cellEl.classList.add("border-right-thick");
-          if (r === 2 || r === 5) cellEl.classList.add("border-bottom-thick");
-
-          if (val === 0) {
-            cellEl.innerText = "·";
-          } else {
-            cellEl.innerText = val;
-            if (isConflict(r, c)) {
-              cellEl.classList.add("state-conflict");
-            } else if (isCorrected(r, c)) {
-              cellEl.classList.add("state-fixed");
-            } else if (isSolved(r, c)) {
-              cellEl.classList.add("state-solved");
-            } else {
-              cellEl.classList.add("state-clue");
-            }
-          }
-        }
-      }
-    }
-
-    function isConflict(r, c) {
-      return conflicts.some(([cr, cc]) => cr === r && cc === c);
-    }
-
-    function isCorrected(r, c) {
-      return corrections.some(([cr, cc]) => cr === r && cc === c);
-    }
-
-    function isSolved(r, c) {
-      return initialGivens[r][c] === 0 && gridData[r][c] !== 0;
-    }
-
-    // =========================================================================
-    // Step-by-Step AI Execution Engine
-    // =========================================================================
-
-    function advanceStep() {
-      currentStep++;
-      if (currentStep === 1) executeStep1();
-      else if (currentStep === 2) executeStep2();
-      else if (currentStep === 3) executeStep3();
-      else if (currentStep === 4) executeStep4();
-      else {
-        currentStep = 4;
-        alert("The puzzle is already completed. Click 'Reset 🔄' to reload.");
-      }
-    }
-
-    function runAllSteps() {
-      resetCurrentScenario();
-      for (let i = 1; i <= 4; i++) {
-        advanceStep();
-      }
-    }
-
-    function resetCurrentScenario() {
-      loadScenario(document.getElementById("scenario-select").value);
-    }
-
-    // STAGE 1: Neural Network Inference & Margin Analysis
-    function executeStep1() {
-      document.getElementById("metric-stage").innerText = "1 / 4 (NN)";
-      document.getElementById("board-status-badge").innerText = "Stage 1: NN Inference & Margin Analysis";
-      document.getElementById("board-status-badge").style.color = "var(--primary)";
-
-      renderBoard();
-
-      let ambiguousList = Object.entries(cellInferences).filter(([_, inf]) => inf.isAmbiguous);
-
-      const modelName = liveBackendData ? liveBackendData.model_type : "Deep Multi-Layer Perceptron (784 -> 256 -> 128 -> 9)";
-      const testAcc = liveBackendData ? (liveBackendData.test_accuracy * 100).toFixed(2) : "97.97";
-      const sourceInfo = liveBackendData ? "Real Inference on MNIST Test Patches (Joblib Model Weights)" : "Pre-computed Calibrated Distributions";
-
-      let text = 
-        `<div class="tech-block">` +
-        `<strong class="highlight-blue">STAGE 1: NEURAL NETWORK INFERENCE & PROBABILITY CALIBRATION</strong>\n` +
-        `========================================================================================\n` +
-        `• Image Input Processing:   81 single-channel 28x28 grayscale image patches.\n` +
-        `• Blank Patch Detection:    Pixel mean brightness evaluated against threshold θ = 0.05.\n` +
-        `                            -> ${81 - countClues()} blank cells detected and mapped to 0 (bypassing NN inference).\n` +
-        `• Classification Model:     ${modelName}.\n` +
-        `• Inference Source:         ${sourceInfo}.\n` +
-        `• MNIST Test Accuracy:      ${testAcc}% on digits 1–9.\n` +
-        `• Temperature Scaling:      Logits calibrated using optimal validation temperature T = 1.000 (ECE = 0.0089).\n` +
-        `• Total Clues Classified:   ${countClues()} clue cells.\n` +
-        `----------------------------------------------------------------------------------------\n` +
-        `CONFIDENCE MARGIN ANALYSIS (Δ = P_top - P_alt):\n`;
-
-      if (ambiguousList.length > 0) {
-        ambiguousList.forEach(([coord, inf]) => {
-          text += 
-            `  [ALERT] Cell (${coord}) -> Predicted '${inf.topDigit}' (${(inf.topProb*100).toFixed(1)}%), ` +
-            `Alt '${inf.altDigit}' (${(inf.altProb*100).toFixed(1)}%) | ` +
-            `<strong class="highlight-amber">Confidence Margin Δ = +${(inf.margin*100).toFixed(1)}% [HIGH UNCERTAINTY]</strong>\n`;
-        });
-        text += 
-          `\n• Analytical Conclusion: The classifier has assigned a narrow margin (Δ < 20%) to ${ambiguousList.length} clue(s).\n` +
-          `  These cells represent high-risk candidates for misread substitution during downstream search.\n` +
-          `  Switch to the "Full Model Predictions" tab above to view the full probability distribution for all clues.`;
-      } else {
-        text += 
-          `  All ${countClues()} clues exhibit wide confidence margins (Δ > 80%). Predictions are highly decisive.`;
-      }
-
-      text += `</div>`;
-      document.getElementById("step-trace-content").innerHTML = text;
-    }
-
-    // STAGE 2: AC-3 Constraint Propagation & Domain Pruning
-    function executeStep2() {
-      document.getElementById("metric-stage").innerText = "2 / 4 (AC-3)";
-      document.getElementById("board-status-badge").innerText = "Stage 2: AC-3 Arc Consistency Verification";
-      document.getElementById("board-status-badge").style.color = "var(--accent-red)";
-
-      conflicts = [];
-      let conflictDetails = [];
-
-      if (liveBackendData && liveBackendData.ac3) {
-        const liveConflicts = liveBackendData.ac3.conflicts;
-        liveConflicts.forEach(c => {
-          conflicts.push(c.cell1);
-          conflicts.push(c.cell2);
-          conflictDetails.push({
-            c1: `(${c.cell1[0]}, ${c.cell1[1]})`, v1: c.digit,
-            c2: `(${c.cell2[0]}, ${c.cell2[1]})`, v2: c.digit,
-            unit: "Shared Peer Scope (Row/Column/Box)",
-            rule: `Alldifferent peer constraint violated`
-          });
-        });
-      } else {
-        if (currentScenario === "1") {
-          conflicts = [[0, 0], [1, 0]];
-          conflictDetails.push({
-            c1: "(0, 0)", v1: 6,
-            c2: "(1, 0)", v2: 6,
-            unit: "Column 0 and 3x3 Box 0",
-            rule: "Alldifferent(Col 0)"
-          });
-        } else if (currentScenario === "2") {
-          conflicts = [[0, 0], [1, 0], [0, 4], [8, 4]];
-          conflictDetails.push({ c1: "(0, 0)", v1: 6, c2: "(1, 0)", v2: 6, unit: "Col 0 / Box 0", rule: "Alldifferent(Col 0)" });
-          conflictDetails.push({ c1: "(0, 4)", v1: 8, c2: "(8, 4)", v2: 8, unit: "Col 4", rule: "Alldifferent(Col 4)" });
-        }
-      }
-
-      renderBoard();
-
-      const arcsTested = liveBackendData ? liveBackendData.ac3.arcs_tested : 810;
-      const valuesPruned = liveBackendData ? liveBackendData.ac3.values_pruned : (conflicts.length > 0 ? 1 : 0);
-
-      let text = 
-        `<div class="tech-block">` +
-        `<strong class="highlight-red">STAGE 2: AC-3 ARC CONSISTENCY PROPAGATION & DOMAIN ANALYSIS</strong>\n` +
-        `========================================================================================\n` +
-        `• Constraint Network:       81 Variables, binary inequality constraints: X_i ≠ X_j ∀ (X_i, X_j) ∈ Peers.\n` +
-        `• Arc Queue Initialization: 810 directed constraint arcs added to revision queue Q.\n` +
-        `• Propagation Engine:       Arc Consistency Algorithm #3 (AC-3).\n` +
-        `• Arcs Evaluated:           ${arcsTested} directed arcs processed.\n` +
-        `• Domain Values Pruned:     ${valuesPruned} values eliminated from variable domains.\n` +
-        `----------------------------------------------------------------------------------------\n` +
-        `ARC REVISION EXECUTION TRACE:\n`;
-
-      if (conflicts.length > 0) {
-        conflictDetails.forEach(cd => {
-          text += 
-            `  [DOMAIN COLLAPSE]: Evaluating directed arc (${cd.c1} -> ${cd.c2})...\n` +
-            `    -> Both fixed givens share value ${cd.v1} within ${cd.unit}.\n` +
-            `    -> Constraint violated: No value in D(${cd.c2}) satisfies ${cd.v1} ≠ ${cd.v2}.\n` +
-            `    -> Domain wipeout detected: <strong class="highlight-red">D(${cd.c1}) = ∅ (Empty Domain)</strong>.\n`;
-        });
-
-        text += 
-          `\n• Theoretical Conclusion:\n` +
-          `  AC-3 terminates in polynomial time O(c·d³) and mathematically proves that NO valid\n` +
-          `  Sudoku assignment can exist for the current reading. Backtracking solver aborted.\n` +
-          `  State-Space Correction Search (A*) invoked to explore minimal-penalty digit substitutions.`;
-      } else {
-        text += 
-          `  • All directed arcs verified consistent.\n` +
-          `  • Domain sizes: |D(X_i)| = 1 for clues, |D(X_i)| ∈ [1..9] for empty variables.\n` +
-          `  • Result: No domain collapses detected. Puzzle is mathematically satisfiable without corrections.`;
-      }
-
-      text += `</div>`;
-      document.getElementById("step-trace-content").innerHTML = text;
-    }
-
-    // STAGE 3: A* State-Space Search Frontier & Heuristic Evaluation
-    function executeStep3() {
-      document.getElementById("metric-stage").innerText = "3 / 4 (Search)";
-      document.getElementById("board-status-badge").innerText = "Stage 3: A* State-Space Correction Search";
-      document.getElementById("board-status-badge").style.color = "var(--accent-amber)";
-
-      conflicts = [];
-      corrections = [];
-
-      let searchLog = [];
-      let nodes = 0;
-      let time = 0;
-
-      if (liveBackendData && liveBackendData.search) {
-        const liveSearch = liveBackendData.search;
-        nodes = liveSearch.nodes_expanded;
-        time = liveSearch.elapsed_time_ms;
-        searchLog = liveSearch.queue_trace || [];
-
-        liveSearch.corrections.forEach(c => {
-          gridData[c.cell[0]][c.cell[1]] = c.to;
-          corrections.push(c.cell);
-        });
-      } else {
-        if (currentScenario === "1") {
-          gridData[0][0] = 5;
-          corrections = [[0, 0]];
-          nodes = 2;
-          time = 28.7;
-          searchLog = [
-            { iter: 1, state: "Root ()", g: "0.000", h: "0.071", f: "0.071", goal: "FAIL (Col 0 Conflict)" },
-            { iter: 2, state: "Cell (0, 0) -> 5", g: "0.071", h: "0.000", f: "0.071", goal: "SUCCESS (0 Conflicts, AC-3 Solvable)" }
-          ];
-        } else if (currentScenario === "2") {
-          gridData[0][0] = 5;
-          gridData[0][4] = 7;
-          corrections = [[0, 0], [0, 4]];
-          nodes = 4;
-          time = 28.5;
-          searchLog = [
-            { iter: 1, state: "Root ()", g: "0.000", h: "0.442", f: "0.442", goal: "FAIL (Col 0 & Col 4 Conflicts)" },
-            { iter: 2, state: "Cell (0, 0) -> 5", g: "0.071", h: "0.371", f: "0.442", goal: "FAIL (Col 4 Conflict Remaining)" },
-            { iter: 3, state: "Cell (0, 4) -> 7", g: "0.371", h: "0.071", f: "0.442", goal: "FAIL (Col 0 Conflict Remaining)" },
-            { iter: 4, state: "Cell (0, 0) -> 5, Cell (0, 4) -> 7", g: "0.442", h: "0.000", f: "0.442", goal: "SUCCESS (0 Conflicts, AC-3 Solvable)" }
-          ];
-        }
-      }
-
-      document.getElementById("metric-nodes").innerText = nodes;
-      document.getElementById("metric-time").innerText = `${time.toFixed(1)} ms`;
-
-      populateSearchTable(searchLog);
-      renderBoard();
-
-      let text = 
-        `<div class="tech-block">` +
-        `<strong class="highlight-amber">STAGE 3: A* STATE-SPACE CORRECTION SEARCH EXECUTION</strong>\n` +
-        `========================================================================================\n` +
-        `• Search Formulation:       State = Set of Clue Corrections {((r, c), new_digit)}.\n` +
-        `• Step Cost Function:       c(s, a, s') = max(0, P_top - P_alt) [NN Confidence Penalty].\n` +
-        `• Heuristic Function h(n):  Admissible conflict-reduction sum over disjoint collision pairs.\n` +
-        `• Priority Function:        f(n) = g(n) + h(n).\n` +
-        `----------------------------------------------------------------------------------------\n` +
-        `SEARCH TREE EXPANSION SUMMARY:\n` +
-        `• Nodes Expanded:           ${nodes}\n` +
-        `• Total Frontier Generated: ${nodes + 2}\n` +
-        `• Search Execution Time:    ${time.toFixed(2)} ms\n`;
-
-      if (corrections.length > 0) {
-        corrections.forEach(([r, c]) => {
-          const inf = cellInferences[`${r},${c}`];
-          const cost = inf ? (inf.topProb - (inf.allProbs ? inf.allProbs[gridData[r][c]] : 0.0)).toFixed(3) : "0.071";
-          text += `• <strong class="highlight-green">[OPTIMAL SUBSTITUTION FOUND]</strong>: Cell (${r}, ${c}) changed -> ${gridData[r][c]} (Cost Δ = ${cost})\n`;
-        });
-        text += 
-          `\n• Mathematical Admissibility Proof:\n` +
-          `  Because h(n) sums the minimum alteration cost over disjoint duplicate conflict pairs,\n` +
-          `  it strictly underestimates the true cost to reach consistency: h(n) ≤ h*(n).\n` +
-          `  A* is guaranteed to find the minimal-penalty reading without suboptimal branch expansion.`;
-      } else {
-        text += `• No search required. Board is already consistent.\n`;
-      }
-
-      text += `</div>`;
-      document.getElementById("step-trace-content").innerHTML = text;
-    }
-
-    // STAGE 4: CSP Forward Checking Variable Completion
-    function executeStep4() {
-      document.getElementById("metric-stage").innerText = "4 / 4 (Solved)";
-      document.getElementById("board-status-badge").innerText = "Stage 4: CSP Variable Assignment Complete";
-      document.getElementById("board-status-badge").style.color = "var(--accent-green)";
-
-      if (liveBackendData && liveBackendData.csp && liveBackendData.csp.solved_grid) {
-        gridData = liveBackendData.csp.solved_grid.map(row => [...row]);
-        document.getElementById("metric-backtracks").innerText = liveBackendData.csp.backtracks;
-        document.getElementById("metric-time").innerText = `${liveBackendData.csp.elapsed_time_ms.toFixed(1)} ms`;
-      } else {
-        if (currentScenario === "4") {
-          gridData = [
-            [9, 2, 7, 3, 4, 5, 8, 6, 1],
-            [4, 8, 1, 6, 7, 2, 9, 3, 5],
-            [3, 6, 5, 9, 1, 8, 2, 4, 7],
-            [7, 5, 8, 4, 6, 9, 3, 1, 2],
-            [6, 9, 3, 2, 5, 1, 7, 8, 4],
-            [1, 4, 2, 8, 3, 7, 5, 6, 9],
-            [2, 7, 9, 1, 8, 6, 4, 5, 3],
-            [8, 3, 6, 5, 2, 4, 1, 7, 9],
-            [5, 1, 4, 7, 9, 3, 6, 2, 8]
-          ];
-          document.getElementById("metric-backtracks").innerText = "43";
-          document.getElementById("metric-time").innerText = "3.5 ms";
-        } else {
-          gridData = COMPLETE_SOLUTION.map(r => [...r]);
-          document.getElementById("metric-backtracks").innerText = "0";
-          document.getElementById("metric-time").innerText = "1.8 ms";
-        }
-      }
-
-      renderBoard();
-
-      let text = 
-        `<div class="tech-block">` +
-        `<strong class="highlight-green">STAGE 4: CSP FORWARD CHECKING SOLUTION OF REMAINING VARIABLES</strong>\n` +
-        `========================================================================================\n` +
-        `• Solver Strategy:          Backtracking with Forward Checking (FC) & MRV Variable Ordering.\n` +
-        `• Variables Assigned:       ${81 - countClues()} empty cells.\n` +
-        `• Total Backtracks:         ${document.getElementById("metric-backtracks").innerText}\n` +
-        `• Solving Time:             ${document.getElementById("metric-time").innerText}\n` +
-        `----------------------------------------------------------------------------------------\n` +
-        `POST-SOLVE VALIDATION AUDIT (27 Units Verified):\n` +
-        `  ✔ Rows 0–8:               All 9 rows contain unique permutations of {1..9} (Sum = 45).\n` +
-        `  ✔ Columns 0–8:            All 9 columns contain unique permutations of {1..9} (Sum = 45).\n` +
-        `  ✔ 3x3 Blocks 0–8:         All 9 sub-grids contain unique permutations of {1..9} (Sum = 45).\n` +
-        `• FINAL SYSTEM VERDICT:     PUZZLE 100% MATHEMATICALLY VALID AND CONSISTENT.` +
-        `</div>`;
-
-      document.getElementById("step-trace-content").innerHTML = text;
-    }
-
-    // =========================================================================
-    // Tables and Modal Data Injection
-    // =========================================================================
-
-    function populateNNTable() {
-      const tbody = document.getElementById("nn-predictions-tbody");
-      tbody.innerHTML = "";
-
-      const entries = Object.entries(cellInferences);
-      entries.sort((a, b) => a[1].margin - b[1].margin); // Show narrowest margin first!
-
-      entries.forEach(([coord, inf]) => {
-        const tr = document.createElement("tr");
-        const statusHtml = inf.isAmbiguous 
-          ? `<span class="tag-danger">HIGH UNCERTAINTY (Δ < 15%)</span>`
-          : `<span class="tag-success">Confident</span>`;
-
-        tr.innerHTML = `
-          <td><strong>(${coord})</strong></td>
-          <td style="color: var(--primary); font-weight:700;">${inf.topDigit}</td>
-          <td>${(inf.topProb * 100).toFixed(1)}%</td>
-          <td style="color: var(--accent-amber); font-weight:700;">${inf.altDigit}</td>
-          <td>${(inf.altProb * 100).toFixed(1)}%</td>
-          <td style="font-family: monospace; font-weight:700;">+${(inf.margin * 100).toFixed(1)}%</td>
-          <td>${statusHtml}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function populateSearchTable(log) {
-      const tbody = document.getElementById("search-trace-tbody");
-      tbody.innerHTML = "";
-
-      log.forEach(item => {
-        const tr = document.createElement("tr");
-        const isSuccess = item.goal.includes("SUCCESS");
-        tr.innerHTML = `
-          <td>#${item.iter}</td>
-          <td><strong>${item.state}</strong></td>
-          <td style="font-family: monospace;">${item.g}</td>
-          <td style="font-family: monospace;">${item.h}</td>
-          <td style="font-family: monospace; font-weight: 700; color: var(--primary);">${item.f}</td>
-          <td style="color: ${isSuccess ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight: 600;">${item.goal}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function clearSearchLog() {
-      const tbody = document.getElementById("search-trace-tbody");
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Awaiting Stage 3 Search Execution...</td></tr>`;
-    }
-
-    function openCellInspector(r, c) {
-      const val = gridData[r][c];
-      const key = `${r},${c}`;
-      const modal = document.getElementById("cell-modal");
-      const title = document.getElementById("modal-cell-title");
-      const body = document.getElementById("modal-cell-body");
-
-      title.innerText = `Cell (${r}, ${c}) Deep Inspector`;
-
-      let cellType = "Empty Variable";
-      if (initialGivens[r][c] !== 0) cellType = "Classified Given Clue";
-      if (isConflict(r, c)) cellType = "Conflicting Clue (AC-3 Violation)";
-      if (isCorrected(r, c)) cellType = "Search-Corrected Cell";
-      if (isSolved(r, c)) cellType = "CSP Forward Checking Solved Cell";
-
-      let html = `
-        <div style="font-size: 0.85rem; margin-bottom: 1rem; color: var(--text-muted);">
-          <strong>Current Value:</strong> <span style="font-size: 1.1rem; color: var(--primary); font-weight:700;">${val === 0 ? "Empty (0)" : val}</span> | 
-          <strong>Cell Type:</strong> ${cellType} | 
-          <strong>Scope:</strong> Row ${r}, Col ${c}, Block ${3*Math.floor(r/3) + Math.floor(c/3)} (20 Peers)
-        </div>
+  /* ================================================================
+     NN TABLE
+  ================================================================ */
+  function buildNNTable() {
+    const tb = document.getElementById("nn-tbody");
+    tb.innerHTML = "";
+    const entries = Object.entries(inferences).sort((a,b) => a[1].margin - b[1].margin);
+    entries.forEach(([k, inf]) => {
+      const tr = document.createElement("tr");
+      const isAmb = inf.margin < 0.20;
+      tr.innerHTML = `
+        <td class="mono">(${k.replace(",",", ")})</td>
+        <td style="font-weight:700;color:var(--step1);">${inf.topDigit}</td>
+        <td class="mono">${(inf.topProb*100).toFixed(2)}%</td>
+        <td style="color:var(--step3);">${inf.altDigit}</td>
+        <td class="mono">${(inf.altProb*100).toFixed(2)}%</td>
+        <td class="mono" style="font-weight:700;">${(inf.margin*100).toFixed(2)}%</td>
+        <td>${isAmb ? '<span class="tag-warn">Uncertain</span>' : '<span class="tag-ok">Confident</span>'}</td>
       `;
+      tb.appendChild(tr);
+    });
+  }
 
-      if (cellInferences[key]) {
-        const inf = cellInferences[key];
-        html += `<h4 style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem;">Calibrated Softmax Probability Distribution (Classes 1–9):</h4>`;
+  function clearS3Queue() {
+    document.getElementById("s3-queue").innerHTML = '<p class="small">Run step 3 to see expansion.</p>';
+  }
 
-        for (let d = 1; d <= 9; d++) {
-          const p = inf.allProbs[d];
-          const pct = (p * 100).toFixed(1);
-          let barColor = "#334155";
-          if (d === inf.topDigit) barColor = "var(--primary)";
-          else if (d === inf.altDigit) barColor = "var(--accent-amber)";
+  /* ================================================================
+     STEP EXECUTION
+  ================================================================ */
+  function advanceStep() {
+    currentStep++;
+    if (currentStep === 1) runStep1();
+    else if (currentStep === 2) runStep2();
+    else if (currentStep === 3) runStep3();
+    else if (currentStep === 4) runStep4();
+    else { currentStep = 4; alert("Pipeline complete. Click Reset to start again."); }
+  }
 
-          html += `
-            <div class="prob-bar-container">
-              <span class="prob-label">Digit ${d}</span>
-              <div class="prob-bar-track">
-                <div class="prob-bar-fill" style="width: ${pct}%; background: ${barColor};"></div>
-              </div>
-              <span class="prob-val">${pct}%</span>
+  function runAll() { resetScenario(); [1,2,3,4].forEach(() => advanceStep()); }
+  function resetScenario() { loadScenario(document.getElementById("scenario-sel").value); }
+
+  /* ---- STEP 1 ---- */
+  function runStep1() {
+    setMeta("1 / 4", "—", "—", "—");
+    setPill("pill-s1", "Stage 1: NN Inference");
+    setBadge("s1", "done", "Done");
+    openCard("s1");
+
+    // Alerts section
+    const ambig = Object.entries(inferences).filter(([,v]) => v.isAmbiguous);
+    let alertsHtml = "";
+    if (ambig.length === 0) {
+      alertsHtml = `<p class="small">All ${Object.keys(inferences).length} classified cells have confidence margin &gt; 20%. No uncertain predictions.</p>`;
+    } else {
+      ambig.forEach(([k, inf]) => {
+        alertsHtml += `
+          <div class="conflict-row" style="border-color:var(--step3);">
+            <span class="cicon">&#9888;</span>
+            <div class="ctext">
+              <strong>Cell (${k.replace(",",", ")}): model predicted '${inf.topDigit}' but alternative '${inf.altDigit}' is very close</strong>
+              <span>
+                P(${inf.topDigit}) = ${(inf.topProb*100).toFixed(2)}%,&nbsp;
+                P(${inf.altDigit}) = ${(inf.altProb*100).toFixed(2)}%,&nbsp;
+                margin &Delta; = ${(inf.margin*100).toFixed(2)}%
+                &mdash; below 20% threshold, flagged as uncertain
+              </span>
             </div>
-          `;
-        }
+          </div>`;
+      });
+    }
+    document.getElementById("s1-alerts").innerHTML = alertsHtml;
+  }
 
-        html += `
-          <div style="margin-top: 1rem; font-size: 0.82rem; color: var(--text-muted); background: #080c14; padding: 0.75rem; border-radius: 6px;">
-            <strong>Confidence Margin (Δ):</strong> ${(inf.margin * 100).toFixed(1)}% between '${inf.topDigit}' and '${inf.altDigit}'.<br>
-            <strong>Search Action Cost if altered:</strong> c = max(0, ${(inf.topProb).toFixed(3)} - P(d))
-          </div>
-        `;
+  /* ---- STEP 2 ---- */
+  function runStep2() {
+    setBadge("s2", "running", "Running…");
+    openCard("s2");
+    conflicts = [];
+
+    let traceHtml  = "";
+    let resultHtml = "";
+    let arcs       = "—";
+    let pruned     = "—";
+
+    if (liveData && liveData.ac3) {
+      const ac3 = liveData.ac3;
+      arcs   = ac3.arcs_tested;
+      pruned = ac3.values_pruned;
+
+      const seen = new Set();
+      ac3.conflicts.forEach(cf => {
+        const key = `${cf.cell1}-${cf.cell2}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        conflicts.push(cf.cell1, cf.cell2);
+        traceHtml += buildArcRow(cf.cell1, cf.cell2, cf.digit);
+      });
+    } else {
+      arcs = 810; pruned = 0;
+      if (currentScenario === "1") {
+        conflicts = [[0,0],[1,0]];
+        traceHtml = buildArcRow([0,0],[1,0],6);
+      } else if (currentScenario === "2") {
+        conflicts = [[0,0],[1,0],[0,4],[8,4]];
+        traceHtml = buildArcRow([0,0],[1,0],6) + buildArcRow([0,4],[8,4],8);
+      }
+    }
+
+    document.getElementById("s2-stats").textContent =
+      `Variables: 81  |  Arc queue: 810 directed arcs  |  Arcs tested: ${arcs}  |  Domain values pruned: ${pruned}`;
+
+    if (traceHtml === "") {
+      traceHtml = `<p class="small">All arcs verified consistent &mdash; no domain collapses detected.</p>`;
+    }
+    document.getElementById("s2-trace").innerHTML = traceHtml;
+
+    if (conflicts.length > 0) {
+      resultHtml = `<div class="conflict-row" style="border-color:var(--step2);">
+        <span class="cicon">&#10007;</span>
+        <div class="ctext">
+          <strong>Board is NOT arc-consistent &mdash; ${conflicts.length/2} duplicate constraint violation(s) detected</strong>
+          <span>AC-3 proves no valid assignment exists for the current reading.
+          Handing off to A* search to find the minimum-penalty digit substitution(s).</span>
+        </div>
+      </div>`;
+      setBadge("s2","error","Conflict!");
+      setPill("pill-s2","Stage 2: Conflict detected");
+    } else {
+      resultHtml = `<div class="conflict-row" style="border-color:var(--step1);background:#f0faf3;">
+        <span class="cicon">&#10003;</span>
+        <div class="ctext">
+          <strong>Board is arc-consistent &mdash; all 810 arcs passed</strong>
+          <span>No domain collapses. The puzzle can be solved directly by the CSP engine without any digit corrections.</span>
+        </div>
+      </div>`;
+      setBadge("s2","done","Consistent");
+      setPill("pill-s1","Stage 2: OK");
+    }
+    document.getElementById("s2-result").innerHTML = resultHtml;
+    renderGrid();
+    setMeta("2 / 4", "—", "—", "—");
+  }
+
+  function buildArcRow(c1, c2, d) {
+    const peers = sameUnit(c1, c2);
+    return `<div class="conflict-row">
+      <span class="cicon">&#10007;</span>
+      <div class="ctext">
+        <strong>Arc (${c1[0]},${c1[1]}) &rarr; (${c2[0]},${c2[1]}): both hold value ${d} &mdash; domain collapse</strong>
+        <span>Shared constraint scope: ${peers}.
+        Rule violated: X<sub>(${c1[0]},${c1[1]})</sub> &ne; X<sub>(${c2[0]},${c2[1]})</sub>.
+        D(${c1[0]},${c1[1]}) = &empty; (empty domain).</span>
+      </div>
+    </div>`;
+  }
+
+  function sameUnit(c1, c2) {
+    if (c1[0]===c2[0]) return `Row ${c1[0]}`;
+    if (c1[1]===c2[1]) return `Column ${c1[1]}`;
+    return `Box (${Math.floor(c1[0]/3)*3}&ndash;${Math.floor(c1[0]/3)*3+2}, ${Math.floor(c1[1]/3)*3}&ndash;${Math.floor(c1[1]/3)*3+2})`;
+  }
+
+  /* ---- STEP 3 ---- */
+  function runStep3() {
+    setBadge("s3","running","Running…");
+    openCard("s3");
+    corrected = [];
+    conflicts = [];
+
+    let queueHtml  = "";
+    let resultHtml = "";
+    let nodes = "—", time = "—";
+
+    if (liveData && liveData.search) {
+      const sr = liveData.search;
+      nodes = sr.nodes_expanded;
+      time  = sr.elapsed_time_ms.toFixed(1) + " ms";
+
+      sr.queue_trace.forEach(it => {
+        const isOk = it.goal.includes("SUCCESS");
+        queueHtml += buildSearchRow(it.iter, it.state, it.g, it.h, it.f, it.goal, isOk);
+      });
+
+      sr.corrections.forEach(c => {
+        gridData[c.cell[0]][c.cell[1]] = c.to;
+        corrected.push(c.cell);
+      });
+
+      if (sr.corrections.length === 0) {
+        resultHtml = `<p class="small">No corrections needed &mdash; board was already consistent.</p>`;
       } else {
-        html += `
-          <div style="font-size: 0.85rem; color: var(--text-muted); padding: 1rem; text-align: center; background: #080c14; border-radius: 6px;">
-            This cell was detected as blank by mean pixel brightness (θ < 0.05).<br>
-            It bypassed the neural network and its domain is managed exclusively by the CSP solver.
+        resultHtml = sr.corrections.map(c => {
+          const inf = inferences[`${c.cell[0]},${c.cell[1]}`];
+          const prob_new = inf ? (inf.allProbs[c.to]*100).toFixed(2) : "—";
+          return `<div class="conflict-row" style="border-color:var(--step1);background:#f0faf3;">
+            <span class="cicon">&#10003;</span>
+            <div class="ctext">
+              <strong>Cell (${c.cell[0]},${c.cell[1]}): change ${c.from} &rarr; ${c.to} &nbsp; cost = ${c.cost.toFixed(4)}</strong>
+              <span>P(${c.from}) was ${inf ? (inf.topProb*100).toFixed(2) : "—"}%,
+              P(${c.to}) = ${prob_new}%.
+              The model had already flagged this cell as uncertain (margin &Delta; = ${inf ? (inf.margin*100).toFixed(2) : "—"}%).
+              Substituting to ${c.to} removes all constraint violations.</span>
+            </div>
+          </div>`;
+        }).join("");
+      }
+    } else {
+      // offline
+      let srData = [];
+      if (currentScenario === "1") {
+        nodes = 2; time = "28.7 ms";
+        gridData[0][0] = 5; corrected = [[0,0]];
+        srData = [
+          {iter:1,state:"Root (no corrections)",g:"0.000",h:"0.071",f:"0.071",goal:"FAIL — col-0 conflict remains",ok:false},
+          {iter:2,state:"Cell (0,0) → 5",g:"0.071",h:"0.000",f:"0.071",goal:"SUCCESS — 0 conflicts, AC-3 valid",ok:true}
+        ];
+        resultHtml = `<div class="conflict-row" style="border-color:var(--step1);background:#f0faf3;">
+          <span class="cicon">&#10003;</span>
+          <div class="ctext">
+            <strong>Cell (0,0): change 6 &rarr; 5 &nbsp; cost = 0.0712</strong>
+            <span>P(6)=53.45%, P(5)=46.33%.  Margin was only 7.1%, so the model was uncertain.
+            After substitution: 0 conflicts, board is solvable.</span>
           </div>
-        `;
+        </div>`;
+      } else if (currentScenario === "2") {
+        nodes = 4; time = "28.5 ms";
+        gridData[0][0] = 5; gridData[0][4] = 7;
+        corrected = [[0,0],[0,4]];
+        srData = [
+          {iter:1,state:"Root (no corrections)",g:"0.000",h:"0.442",f:"0.442",goal:"FAIL — 2 conflicts remain",ok:false},
+          {iter:2,state:"Cell (0,0) → 5",g:"0.071",h:"0.371",f:"0.442",goal:"FAIL — col-4 conflict remains",ok:false},
+          {iter:3,state:"Cell (0,4) → 7",g:"0.371",h:"0.071",f:"0.442",goal:"FAIL — col-0 conflict remains",ok:false},
+          {iter:4,state:"Cell (0,0) → 5 + Cell (0,4) → 7",g:"0.442",h:"0.000",f:"0.442",goal:"SUCCESS — 0 conflicts, AC-3 valid",ok:true}
+        ];
+        resultHtml = `
+          <div class="conflict-row" style="border-color:var(--step1);background:#f0faf3;">
+            <span class="cicon">&#10003;</span>
+            <div class="ctext"><strong>Cell (0,0): 6 &rarr; 5, cost 0.0712</strong>
+            <span>P(6)=53.45%, P(5)=46.33%, margin 7.1%</span></div>
+          </div>
+          <div class="conflict-row" style="border-color:var(--step1);background:#f0faf3;">
+            <span class="cicon">&#10003;</span>
+            <div class="ctext"><strong>Cell (0,4): 9 &rarr; 7, cost 0.3711</strong>
+            <span>Both cells were below the 20% uncertainty threshold.</span></div>
+          </div>`;
+      } else {
+        nodes = 0; time = "0 ms";
+        resultHtml = `<p class="small">No corrections needed &mdash; board was already consistent.</p>`;
       }
-
-      body.innerHTML = html;
-      modal.style.display = "flex";
+      srData.forEach(it => {
+        queueHtml += buildSearchRow(it.iter, it.state, it.g, it.h, it.f, it.goal, it.ok);
+      });
     }
 
-    function closeModal(e) {
-      if (e.target.classList.contains("modal-overlay")) {
-        e.target.style.display = "none";
+    if (queueHtml === "")
+      queueHtml = `<p class="small">No search was required (board already consistent).</p>`;
+
+    document.getElementById("s3-queue").innerHTML = queueHtml;
+    document.getElementById("s3-result").innerHTML = resultHtml;
+    setBadge("s3", corrected.length>0 ? "done" : "done",
+                   corrected.length>0 ? `${corrected.length} correction(s)` : "No change needed");
+    setPill("pill-s3", `Stage 3: A* (${nodes} nodes)`);
+    setMeta("3 / 4", nodes, "—", time);
+    renderGrid();
+  }
+
+  function buildSearchRow(iter, state, g, h, f, goal, isOk) {
+    return `<div class="search-row ${isOk ? "sr-ok" : "sr-fail"}">
+      <div class="sr-iter">#${iter}</div>
+      <div class="sr-state">
+        <strong>${state}</strong>
+        <span class="sf">g(n)=${g} &nbsp; h(n)=${h} &nbsp; f(n)=${f}</span>
+      </div>
+      <div class="sr-verdict ${isOk ? "vok" : "vf"}">${goal}</div>
+    </div>`;
+  }
+
+  /* ---- STEP 4 ---- */
+  function runStep4() {
+    setBadge("s4","running","Running…");
+    openCard("s4");
+
+    let bt = "—", time = "—", assignments = "—";
+    let sg = null;
+
+    if (liveData && liveData.csp) {
+      const csp = liveData.csp;
+      bt          = csp.backtracks;
+      time        = csp.elapsed_time_ms.toFixed(1) + " ms";
+      assignments = csp.assignments;
+      sg = csp.solved_grid;
+    } else {
+      bt = currentScenario === "4" ? 43 : 0;
+      time = currentScenario === "4" ? "3.5 ms" : "2.6 ms";
+      assignments = currentScenario === "4" ? 99 : 51;
+      sg = currentScenario === "4" ? BENCH_SOL : SOLUTION;
+    }
+
+    if (sg) {
+      gridData = sg.map(r => [...r]);
+      solvedGrid = sg;
+      solved = true;
+    }
+
+    const givens = initialGivens.reduce((s,row)=>s+row.filter(v=>v>0).length, 0);
+    document.getElementById("s4-givens").textContent = givens;
+    document.getElementById("s4-empty").textContent  = 81 - givens;
+    document.getElementById("s4-assign").textContent = assignments;
+    document.getElementById("s4-bt").textContent     = bt;
+    document.getElementById("s4-time").textContent   = time;
+    document.getElementById("s4-status").textContent = sg ? "Solved" : "Failed";
+    document.getElementById("s4-status").style.color = sg ? "var(--ok)" : "var(--warn)";
+
+    // Build mini solved board
+    if (sg) {
+      let bHtml = `<div class="solved-grid">`;
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          const v = sg[r][c];
+          let cls = "sc";
+          if (c===2||c===5) cls += " scbr";
+          if (r===2||r===5) cls += " scbb";
+          if (corrected.some(([cr,cc]) => cr===r && cc===c)) cls += " scf";
+          else if (initialGivens[r][c] !== 0) cls += " scg";
+          else cls += " scs";
+          bHtml += `<div class="${cls}">${v}</div>`;
+        }
       }
+      bHtml += `</div>`;
+      document.getElementById("s4-board").innerHTML = bHtml;
     }
 
-    function switchTab(tabName) {
-      document.querySelectorAll(".tab-bar button").forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
+    // Audit
+    let auditHtml = "";
+    if (sg) {
+      let ok = true;
+      for (let i=0;i<9;i++) {
+        const row = sg[i]; const col = sg.map(r=>r[i]);
+        if (new Set(row).size!==9 || new Set(col).size!==9) { ok=false; break; }
+      }
+      for (let br=0;br<3&&ok;br++) {
+        for (let bc=0;bc<3;bc++) {
+          const box=[];
+          for (let dr=0;dr<3;dr++) for(let dc=0;dc<3;dc++) box.push(sg[br*3+dr][bc*3+dc]);
+          if(new Set(box).size!==9){ok=false;break;}
+        }
+      }
+      auditHtml = ok
+        ? `<span class="tag-ok">PASS</span> All 9 rows, 9 columns and 9 boxes contain unique digits 1&ndash;9 (each summing to 45).`
+        : `<span class="tag-err">FAIL</span> Validation failed &mdash; check solver output.`;
+    }
+    document.getElementById("s4-audit").innerHTML = auditHtml;
 
-      document.getElementById(`tab-btn-${tabName}`).classList.add("active");
-      document.getElementById(`view-${tabName}`).classList.add("active");
+    setBadge("s4","done","Solved!");
+    setPill("pill-s4","Stage 4: Puzzle solved");
+    setMeta("4 / 4", document.getElementById("m-nodes").textContent, bt, time);
+    renderGrid();
+  }
+
+  /* ================================================================
+     CELL INSPECTOR MODAL
+  ================================================================ */
+  function openModal(r, c) {
+    const key = `${r},${c}`;
+    const val = gridData[r][c];
+    document.getElementById("modal-title").textContent = `Cell (${r}, ${c}) — probability distribution`;
+
+    let html = `<div class="small" style="margin-bottom:.6rem;">
+      Value: <strong>${val || "empty"}</strong> &bull; Row ${r}, Col ${c}, Box ${3*Math.floor(r/3)+Math.floor(c/3)} &bull; 20 peer variables
+    </div>`;
+
+    const inf = inferences[key];
+    if (!inf) {
+      html += `<p class="small">This cell is empty &mdash; no neural network inference was run on it.
+      Its value will be determined purely by the CSP solver using domain constraints.</p>`;
+    } else {
+      html += `<div class="output-title" style="margin-bottom:.4rem;">Calibrated softmax P(digit | image) for all 9 classes:</div>`;
+      for (let d = 1; d <= 9; d++) {
+        const p   = inf.allProbs[d] || 0;
+        const pct = (p * 100).toFixed(2);
+        const isTop = d === inf.topDigit;
+        const isAlt = d === inf.altDigit;
+        html += `<div class="prob-row">
+          <span class="dname">Digit ${d}${isTop?" ★":isAlt?" ▲":""}</span>
+          <div class="prob-track">
+            <div class="prob-fill ${isTop?"pf-top":isAlt?"pf-alt":"pf-other"}"
+                 style="width:${Math.min(p*100,100)}%;"></div>
+          </div>
+          <span class="pval">${pct}%</span>
+        </div>`;
+      }
+      html += `<div class="small gap" style="background:var(--bg-alt);padding:.5rem .6rem;border-radius:4px;margin-top:.6rem;">
+        Top prediction: <strong>${inf.topDigit}</strong> (${(inf.topProb*100).toFixed(2)}%) &bull;
+        Runner-up: <strong>${inf.altDigit}</strong> (${(inf.altProb*100).toFixed(2)}%) &bull;
+        Margin &Delta; = <strong>${(inf.margin*100).toFixed(2)}%</strong>
+        ${inf.isAmbiguous ? '&nbsp; <span class="tag-warn">Uncertain</span>' : '&nbsp; <span class="tag-ok">Confident</span>'}
+      </div>
+      <div class="small gap">
+        A* search cost to substitute this cell: <code>c = max(0, P_top &minus; P(new_digit))</code><br>
+        If corrected to ${inf.altDigit}: cost = max(0, ${inf.topProb.toFixed(4)} &minus; ${inf.altProb.toFixed(4)}) = <strong>${inf.margin.toFixed(4)}</strong>
+      </div>`;
     }
 
-    // Initialize on page load
-    window.onload = () => {
-      initGridDOM();
-      loadScenario("1");
-    };
-  </script>
+    document.getElementById("modal-body").innerHTML = html;
+    document.getElementById("modal").classList.add("open");
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById("modal"))
+      document.getElementById("modal").classList.remove("open");
+  }
+
+  /* ================================================================
+     HELPERS
+  ================================================================ */
+  function setMeta(stage, nodes, bt, time) {
+    document.getElementById("m-stage").textContent = stage;
+    document.getElementById("m-nodes").textContent = nodes;
+    document.getElementById("m-bt").textContent    = bt;
+    document.getElementById("m-time").textContent  = time;
+  }
+
+  function setPill(cls, text) {
+    const p = document.getElementById("board-pill");
+    p.className = cls;
+    p.textContent = text;
+  }
+
+  function setBadge(id, type, text) {
+    const b = document.getElementById("badge-s"+id.replace("s",""));
+    if (!b) return;
+    b.className = "step-badge " + type;
+    b.textContent = text;
+  }
+
+  function openCard(id) {
+    const body = document.getElementById("body-s"+id.replace("s",""));
+    if (body) body.classList.add("open");
+  }
+
+  function toggleCard(id) {
+    const body = document.getElementById("body-s"+id.replace("s",""));
+    if (body) body.classList.toggle("open");
+  }
+
+  /* ================================================================
+     INIT
+  ================================================================ */
+  window.onload = () => {
+    buildGrid();
+    loadScenario("1");
+  };
+</script>
 </body>
 </html>
