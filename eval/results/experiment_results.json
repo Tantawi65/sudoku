@@ -1,0 +1,1121 @@
+{
+  "experiment_1": {
+    "summary": {
+      "UCS": {
+        "0": {
+          "recovery_rate_mean": 1.0,
+          "nodes_expanded_mean": 0.0,
+          "nodes_expanded_std": 0.0,
+          "nodes_generated_mean": 1.0,
+          "nodes_generated_std": 0.0,
+          "time_mean": 0.028112339999999958,
+          "time_std": 0.002253301262237258
+        },
+        "1": {
+          "recovery_rate_mean": 1.0,
+          "nodes_expanded_mean": 2.0,
+          "nodes_expanded_std": 0.0,
+          "nodes_generated_mean": 7.0,
+          "nodes_generated_std": 0.0,
+          "time_mean": 0.028151879999999973,
+          "time_std": 0.002937993432531674
+        },
+        "2": {
+          "recovery_rate_mean": 1.0,
+          "nodes_expanded_mean": 3.8,
+          "nodes_expanded_std": 0.39999999999999997,
+          "nodes_generated_mean": 24.4,
+          "nodes_generated_std": 7.683749084919419,
+          "time_mean": 0.03021352000000006,
+          "time_std": 0.001986590022526134
+        },
+        "3": {
+          "recovery_rate_mean": 1.0,
+          "nodes_expanded_mean": 7.6,
+          "nodes_expanded_std": 0.7999999999999999,
+          "nodes_generated_mean": 77.8,
+          "nodes_generated_std": 20.922714928995234,
+          "time_mean": 0.03370842000000003,
+          "time_std": 0.0025796161353193034
+        },
+        "4": {
+          "recovery_rate_mean": 1.0,
+          "nodes_expanded_mean": 14.4,
+          "nodes_expanded_std": 1.9595917942265424,
+          "nodes_generated_mean": 188.8,
+          "nodes_generated_std": 64.27565635604198,
+          "time_mean": 0.045447380000000016,
+          "time_std": 0.004829391202791561
+        }
+      },
+      "Greedy": {
+        "0": {
+          "recovery_rate_mean": 1.0,
+          "nodes_expanded_mean": 0.0,
+          "nodes_expanded_std": 0.0,
+          "nodes_generated_mean": 1.0,
+          "nodes_generated_std": 0.0,
+          "time_mean": 0.026717780000000003,
+          "time_std": 0.001924091825667305
+        },
+        "1": {
+          "recovery_rate_mean": 1.0,
+          "nodes_expanded_mean": 3.2,
+          "nodes_expanded_std": 1.469693845669907,
+          "nodes_generated_mean": 12.4,
+          "nodes_generated_std": 6.681317235396026,
+          "time_mean": 0.032502259999999984,
+          "time_std": 0.011223686025116787
+        },
+        "2": {
+          "recovery_rate_mean": 0.8,
+          "nodes_expanded_mean": 30.4,
+          "nodes_expanded_std": 50.835420722169694,
+          "nodes_generated_mean": 59.2,
+          "nodes_generated_std": 54.8795043709398,
+          "time_mean": 0.04600372000000004,
+          "time_std": 0.02019367593692642
+        },
+        "3": {
+          "recovery_rate_mean": 0.8,
+          "nodes_expanded_mean": 40.2,
+          "nodes_expanded_std": 43.88348208608792,
+          "nodes_generated_mean": 82.6,
+          "nodes_generated_std": 44.51336877837937,
+          "time_mean": 0.06624305999999995,
+          "time_std": 0.03762298065053321
+        },
+        "4": {
+          "recovery_rate_mean": 0.8,
+          "nodes_expanded_mean": 144.0,
+          "nodes_expanded_std": 93.27593473131212,
+          "nodes_generated_mean": 231.0,
+          "nodes_generated_std": 109.65035339660334,
+          "time_mean": 0.10038806000000004,
+          "time_std": 0.04077635435551349
+        }
+      },
+      "AStar": {
+        "0": {
+          "recovery_rate_mean": 1.0,
+          "nodes_expanded_mean": 0.0,
+          "nodes_expanded_std": 0.0,
+          "nodes_generated_mean": 1.0,
+          "nodes_generated_std": 0.0,
+          "time_mean": 0.027507939999999897,
+          "time_std": 0.0017186049675244437
+        },
+        "1": {
+          "recovery_rate_mean": 1.0,
+          "nodes_expanded_mean": 2.0,
+          "nodes_expanded_std": 0.0,
+          "nodes_generated_mean": 7.0,
+          "nodes_generated_std": 0.0,
+          "time_mean": 0.02889966000000004,
+          "time_std": 0.001983048109956054
+        },
+        "2": {
+          "recovery_rate_mean": 1.0,
+          "nodes_expanded_mean": 3.8,
+          "nodes_expanded_std": 0.39999999999999997,
+          "nodes_generated_mean": 23.6,
+          "nodes_generated_std": 7.310266752998826,
+          "time_mean": 0.030080579999999867,
+          "time_std": 0.0018943964277839248
+        },
+        "3": {
+          "recovery_rate_mean": 1.0,
+          "nodes_expanded_mean": 7.6,
+          "nodes_expanded_std": 0.7999999999999999,
+          "nodes_generated_mean": 73.4,
+          "nodes_generated_std": 19.754493159785195,
+          "time_mean": 0.034817000000000056,
+          "time_std": 0.0028100470672214922
+        },
+        "4": {
+          "recovery_rate_mean": 1.0,
+          "nodes_expanded_mean": 14.4,
+          "nodes_expanded_std": 1.9595917942265424,
+          "nodes_generated_mean": 175.0,
+          "nodes_generated_std": 60.37880422797391,
+          "time_mean": 0.04609911999999996,
+          "time_std": 0.0068237863446624246
+        }
+      }
+    },
+    "raw": {
+      "UCS": {
+        "0": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.024553900000000017
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.026735500000000023
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.029637799999999714
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.028657899999999792
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.030976600000000243
+          }
+        ],
+        "1": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.025422499999999904
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.026092600000000132
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.02955489999999994
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.033292099999999714
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.02639730000000018
+          }
+        ],
+        "2": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 4,
+            "nodes_generated": 25,
+            "time": 0.03195519999999996
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 4,
+            "nodes_generated": 31,
+            "time": 0.026864099999999835
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 3,
+            "nodes_generated": 10,
+            "time": 0.032495900000000244
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 4,
+            "nodes_generated": 31,
+            "time": 0.029728200000000093
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 4,
+            "nodes_generated": 25,
+            "time": 0.030024200000000167
+          }
+        ],
+        "3": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 8,
+            "nodes_generated": 85,
+            "time": 0.03637539999999995
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 8,
+            "nodes_generated": 97,
+            "time": 0.036877999999999966
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 6,
+            "nodes_generated": 37,
+            "time": 0.03004490000000004
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 8,
+            "nodes_generated": 85,
+            "time": 0.03221530000000028
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 8,
+            "nodes_generated": 85,
+            "time": 0.033028499999999905
+          }
+        ],
+        "4": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 16,
+            "nodes_generated": 241,
+            "time": 0.050692699999999924
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 16,
+            "nodes_generated": 241,
+            "time": 0.047311799999999904
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 12,
+            "nodes_generated": 100,
+            "time": 0.03936189999999984
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 16,
+            "nodes_generated": 241,
+            "time": 0.04983770000000032
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 12,
+            "nodes_generated": 121,
+            "time": 0.04003280000000009
+          }
+        ]
+      },
+      "Greedy": {
+        "0": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.024498100000000078
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.024302100000000104
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.0276616999999999
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.0287115
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.028415499999999927
+          }
+        ],
+        "1": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 5,
+            "nodes_generated": 22,
+            "time": 0.026234200000000096
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.024906799999999896
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 5,
+            "nodes_generated": 19,
+            "time": 0.054731900000000167
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.026954799999999945
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.02968359999999981
+          }
+        ],
+        "2": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 132,
+            "nodes_generated": 166,
+            "time": 0.06337550000000003
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 3,
+            "nodes_generated": 22,
+            "time": 0.02943640000000003
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 8,
+            "nodes_generated": 34,
+            "time": 0.0769432000000001
+          },
+          {
+            "recovered": 0,
+            "nodes_expanded": 6,
+            "nodes_generated": 55,
+            "time": 0.03101989999999999
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 3,
+            "nodes_generated": 19,
+            "time": 0.029243600000000036
+          }
+        ],
+        "3": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 28,
+            "nodes_generated": 70,
+            "time": 0.045415399999999995
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 4,
+            "nodes_generated": 46,
+            "time": 0.06977959999999994
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 123,
+            "nodes_generated": 163,
+            "time": 0.13729259999999988
+          },
+          {
+            "recovered": 0,
+            "nodes_expanded": 42,
+            "nodes_generated": 94,
+            "time": 0.04767419999999989
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 4,
+            "nodes_generated": 40,
+            "time": 0.031053500000000067
+          }
+        ],
+        "4": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 308,
+            "nodes_generated": 415,
+            "time": 0.09745179999999998
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 19,
+            "nodes_generated": 80,
+            "time": 0.06774039999999992
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 127,
+            "nodes_generated": 178,
+            "time": 0.08258939999999981
+          },
+          {
+            "recovered": 0,
+            "nodes_expanded": 118,
+            "nodes_generated": 256,
+            "time": 0.07465120000000036
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 148,
+            "nodes_generated": 226,
+            "time": 0.17950750000000015
+          }
+        ]
+      },
+      "AStar": {
+        "0": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.024315100000000034
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.028069699999999864
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.027246199999999998
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.029006799999999888
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 0,
+            "nodes_generated": 1,
+            "time": 0.028901899999999703
+          }
+        ],
+        "1": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.029776800000000048
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.025527099999999914
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.03105139999999995
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.027881999999999962
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 2,
+            "nodes_generated": 7,
+            "time": 0.030261000000000315
+          }
+        ],
+        "2": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 4,
+            "nodes_generated": 24,
+            "time": 0.032997799999999966
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 4,
+            "nodes_generated": 30,
+            "time": 0.030231200000000014
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 3,
+            "nodes_generated": 10,
+            "time": 0.02853339999999971
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 4,
+            "nodes_generated": 30,
+            "time": 0.027608399999999644
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 4,
+            "nodes_generated": 24,
+            "time": 0.031032100000000007
+          }
+        ],
+        "3": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 8,
+            "nodes_generated": 80,
+            "time": 0.035629300000000086
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 8,
+            "nodes_generated": 92,
+            "time": 0.031949500000000075
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 6,
+            "nodes_generated": 35,
+            "time": 0.031098599999999976
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 8,
+            "nodes_generated": 80,
+            "time": 0.03793369999999996
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 8,
+            "nodes_generated": 80,
+            "time": 0.03747390000000017
+          }
+        ],
+        "4": [
+          {
+            "recovered": 1,
+            "nodes_expanded": 16,
+            "nodes_generated": 224,
+            "time": 0.05419819999999986
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 16,
+            "nodes_generated": 224,
+            "time": 0.049477900000000075
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 12,
+            "nodes_generated": 91,
+            "time": 0.03842959999999973
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 16,
+            "nodes_generated": 224,
+            "time": 0.05089330000000025
+          },
+          {
+            "recovered": 1,
+            "nodes_expanded": 12,
+            "nodes_generated": 112,
+            "time": 0.03749659999999988
+          }
+        ]
+      }
+    }
+  },
+  "experiment_2": {
+    "summary": {
+      "BT": {
+        "25": {
+          "assignments_mean": 27216.2,
+          "assignments_std": 22863.76078776193,
+          "backtracks_mean": 27160.2,
+          "backtracks_std": 22863.76078776193,
+          "time_mean": 0.5055824199999999,
+          "time_std": 0.4726242674773245
+        },
+        "30": {
+          "assignments_mean": 1323.8,
+          "assignments_std": 833.0623986232964,
+          "backtracks_mean": 1272.8,
+          "backtracks_std": 833.0623986232964,
+          "time_mean": 0.02686011999999973,
+          "time_std": 0.017903049766606553
+        },
+        "35": {
+          "assignments_mean": 699.2,
+          "assignments_std": 979.5834624982192,
+          "backtracks_mean": 653.2,
+          "backtracks_std": 979.5834624982192,
+          "time_mean": 0.018820280000000446,
+          "time_std": 0.029040680067408987
+        }
+      },
+      "FC": {
+        "25": {
+          "assignments_mean": 151.4,
+          "assignments_std": 114.90100086596287,
+          "backtracks_mean": 95.4,
+          "backtracks_std": 114.90100086596287,
+          "time_mean": 0.003930539999999994,
+          "time_std": 0.002356945268435239
+        },
+        "30": {
+          "assignments_mean": 84.0,
+          "assignments_std": 29.57701810527897,
+          "backtracks_mean": 33.0,
+          "backtracks_std": 29.57701810527897,
+          "time_mean": 0.0028144000000001057,
+          "time_std": 0.0008192675362788313
+        },
+        "35": {
+          "assignments_mean": 46.8,
+          "assignments_std": 1.5999999999999999,
+          "backtracks_mean": 0.8,
+          "backtracks_std": 1.6000000000000003,
+          "time_mean": 0.0018969600000000141,
+          "time_std": 0.00018892971814909624
+        }
+      },
+      "AC3": {
+        "25": {
+          "assignments_mean": 145.0,
+          "assignments_std": 114.64902965136687,
+          "backtracks_mean": 95.4,
+          "backtracks_std": 114.90100086596287,
+          "time_mean": 0.03140385999999999,
+          "time_std": 0.0017570713071471409
+        },
+        "30": {
+          "assignments_mean": 60.8,
+          "assignments_std": 51.7818501021352,
+          "backtracks_mean": 33.0,
+          "backtracks_std": 29.57701810527897,
+          "time_mean": 0.027946020000000082,
+          "time_std": 0.0031611256320492
+        },
+        "35": {
+          "assignments_mean": 15.8,
+          "assignments_std": 19.35355264544471,
+          "backtracks_mean": 0.8,
+          "backtracks_std": 1.6000000000000003,
+          "time_mean": 0.024590340000000134,
+          "time_std": 0.004256067111594598
+        }
+      }
+    },
+    "raw": {
+      "BT": {
+        "25": [
+          {
+            "assignments": 29329,
+            "backtracks": 29273,
+            "time": 0.46229540000000036,
+            "solved": 1
+          },
+          {
+            "assignments": 2258,
+            "backtracks": 2202,
+            "time": 0.03730689999999992,
+            "solved": 1
+          },
+          {
+            "assignments": 44419,
+            "backtracks": 44363,
+            "time": 0.7234691,
+            "solved": 1
+          },
+          {
+            "assignments": 1102,
+            "backtracks": 1046,
+            "time": 0.01794599999999935,
+            "solved": 1
+          },
+          {
+            "assignments": 58973,
+            "backtracks": 58917,
+            "time": 1.2868946999999995,
+            "solved": 1
+          }
+        ],
+        "30": [
+          {
+            "assignments": 1197,
+            "backtracks": 1146,
+            "time": 0.02100809999999953,
+            "solved": 1
+          },
+          {
+            "assignments": 1556,
+            "backtracks": 1505,
+            "time": 0.039391799999999755,
+            "solved": 1
+          },
+          {
+            "assignments": 702,
+            "backtracks": 651,
+            "time": 0.011350300000000146,
+            "solved": 1
+          },
+          {
+            "assignments": 382,
+            "backtracks": 331,
+            "time": 0.007486899999999963,
+            "solved": 1
+          },
+          {
+            "assignments": 2782,
+            "backtracks": 2731,
+            "time": 0.055063499999999266,
+            "solved": 1
+          }
+        ],
+        "35": [
+          {
+            "assignments": 62,
+            "backtracks": 16,
+            "time": 0.0017628000000007304,
+            "solved": 1
+          },
+          {
+            "assignments": 390,
+            "backtracks": 344,
+            "time": 0.006634100000000309,
+            "solved": 1
+          },
+          {
+            "assignments": 61,
+            "backtracks": 15,
+            "time": 0.001522699999999766,
+            "solved": 1
+          },
+          {
+            "assignments": 344,
+            "backtracks": 298,
+            "time": 0.007485300000000805,
+            "solved": 1
+          },
+          {
+            "assignments": 2639,
+            "backtracks": 2593,
+            "time": 0.07669650000000061,
+            "solved": 1
+          }
+        ]
+      },
+      "FC": {
+        "25": [
+          {
+            "assignments": 381,
+            "backtracks": 325,
+            "time": 0.0085784999999996,
+            "solved": 1
+          },
+          {
+            "assignments": 99,
+            "backtracks": 43,
+            "time": 0.0025694999999998913,
+            "solved": 1
+          },
+          {
+            "assignments": 95,
+            "backtracks": 39,
+            "time": 0.002619499999999775,
+            "solved": 1
+          },
+          {
+            "assignments": 85,
+            "backtracks": 29,
+            "time": 0.002372900000000122,
+            "solved": 1
+          },
+          {
+            "assignments": 97,
+            "backtracks": 41,
+            "time": 0.003512300000000579,
+            "solved": 1
+          }
+        ],
+        "30": [
+          {
+            "assignments": 51,
+            "backtracks": 0,
+            "time": 0.0018710999999997924,
+            "solved": 1
+          },
+          {
+            "assignments": 128,
+            "backtracks": 77,
+            "time": 0.004031799999999919,
+            "solved": 1
+          },
+          {
+            "assignments": 98,
+            "backtracks": 47,
+            "time": 0.0031582999999999473,
+            "solved": 1
+          },
+          {
+            "assignments": 51,
+            "backtracks": 0,
+            "time": 0.0019244999999994405,
+            "solved": 1
+          },
+          {
+            "assignments": 92,
+            "backtracks": 41,
+            "time": 0.0030863000000014296,
+            "solved": 1
+          }
+        ],
+        "35": [
+          {
+            "assignments": 46,
+            "backtracks": 0,
+            "time": 0.00169499999999978,
+            "solved": 1
+          },
+          {
+            "assignments": 50,
+            "backtracks": 4,
+            "time": 0.0019537999999998945,
+            "solved": 1
+          },
+          {
+            "assignments": 46,
+            "backtracks": 0,
+            "time": 0.0017028000000003374,
+            "solved": 1
+          },
+          {
+            "assignments": 46,
+            "backtracks": 0,
+            "time": 0.0022065999999991703,
+            "solved": 1
+          },
+          {
+            "assignments": 46,
+            "backtracks": 0,
+            "time": 0.0019266000000008887,
+            "solved": 1
+          }
+        ]
+      },
+      "AC3": {
+        "25": [
+          {
+            "assignments": 374,
+            "backtracks": 325,
+            "time": 0.03405669999999983,
+            "solved": 1
+          },
+          {
+            "assignments": 99,
+            "backtracks": 43,
+            "time": 0.03156230000000004,
+            "solved": 1
+          },
+          {
+            "assignments": 85,
+            "backtracks": 39,
+            "time": 0.029358600000000123,
+            "solved": 1
+          },
+          {
+            "assignments": 84,
+            "backtracks": 29,
+            "time": 0.029624899999999954,
+            "solved": 1
+          },
+          {
+            "assignments": 83,
+            "backtracks": 41,
+            "time": 0.03241680000000002,
+            "solved": 1
+          }
+        ],
+        "30": [
+          {
+            "assignments": 0,
+            "backtracks": 0,
+            "time": 0.032678299999999716,
+            "solved": 1
+          },
+          {
+            "assignments": 128,
+            "backtracks": 77,
+            "time": 0.024640200000000334,
+            "solved": 1
+          },
+          {
+            "assignments": 85,
+            "backtracks": 47,
+            "time": 0.024926300000000623,
+            "solved": 1
+          },
+          {
+            "assignments": 0,
+            "backtracks": 0,
+            "time": 0.03051080000000006,
+            "solved": 1
+          },
+          {
+            "assignments": 91,
+            "backtracks": 41,
+            "time": 0.02697449999999968,
+            "solved": 1
+          }
+        ],
+        "35": [
+          {
+            "assignments": 0,
+            "backtracks": 0,
+            "time": 0.025293999999999706,
+            "solved": 1
+          },
+          {
+            "assignments": 40,
+            "backtracks": 4,
+            "time": 0.019799500000000414,
+            "solved": 1
+          },
+          {
+            "assignments": 0,
+            "backtracks": 0,
+            "time": 0.020563800000000576,
+            "solved": 1
+          },
+          {
+            "assignments": 0,
+            "backtracks": 0,
+            "time": 0.025647700000000384,
+            "solved": 1
+          },
+          {
+            "assignments": 39,
+            "backtracks": 0,
+            "time": 0.031646699999999583,
+            "solved": 1
+          }
+        ]
+      }
+    }
+  },
+  "experiment_3": {
+    "summary": {
+      "NN_Guided": {
+        "recovery_rate_mean": 1.0,
+        "nodes_expanded_mean": 3.8,
+        "nodes_expanded_std": 0.39999999999999997,
+        "time_mean": 0.03353697999999987,
+        "time_std": 0.0015184269062418654
+      },
+      "No_Correction": {
+        "recovery_rate_mean": 0.0,
+        "nodes_expanded_mean": 0.0,
+        "nodes_expanded_std": 0.0,
+        "time_mean": 0.0010811799999999039,
+        "time_std": 0.00022260030009015167
+      },
+      "Random_Correction": {
+        "recovery_rate_mean": 0.2,
+        "nodes_expanded_mean": 276.4,
+        "nodes_expanded_std": 313.83600813163554,
+        "time_mean": 0.19417599999999952,
+        "time_std": 0.07696993308148331
+      }
+    },
+    "raw": {
+      "NN_Guided": [
+        {
+          "recovered": 1,
+          "nodes_expanded": 4,
+          "time": 0.03309949999999873
+        },
+        {
+          "recovered": 1,
+          "nodes_expanded": 4,
+          "time": 0.03175680000000014
+        },
+        {
+          "recovered": 1,
+          "nodes_expanded": 3,
+          "time": 0.03377389999999991
+        },
+        {
+          "recovered": 1,
+          "nodes_expanded": 4,
+          "time": 0.036280899999999505
+        },
+        {
+          "recovered": 1,
+          "nodes_expanded": 4,
+          "time": 0.032773800000001074
+        }
+      ],
+      "No_Correction": [
+        {
+          "recovered": 0,
+          "nodes_expanded": 0,
+          "time": 0.0013254000000006982
+        },
+        {
+          "recovered": 0,
+          "nodes_expanded": 0,
+          "time": 0.001336000000000226
+        },
+        {
+          "recovered": 0,
+          "nodes_expanded": 0,
+          "time": 0.0009168999999999983
+        },
+        {
+          "recovered": 0,
+          "nodes_expanded": 0,
+          "time": 0.0007720999999989431
+        },
+        {
+          "recovered": 0,
+          "nodes_expanded": 0,
+          "time": 0.001055499999999654
+        }
+      ],
+      "Random_Correction": [
+        {
+          "recovered": 0,
+          "nodes_expanded": 60,
+          "time": 0.09763289999999891
+        },
+        {
+          "recovered": 1,
+          "nodes_expanded": 67,
+          "time": 0.12332490000000007
+        },
+        {
+          "recovered": 0,
+          "nodes_expanded": 19,
+          "time": 0.18823729999999905
+        },
+        {
+          "recovered": 0,
+          "nodes_expanded": 844,
+          "time": 0.29142519999999905
+        },
+        {
+          "recovered": 0,
+          "nodes_expanded": 392,
+          "time": 0.27025970000000044
+        }
+      ]
+    }
+  }
+}
