@@ -5,8 +5,6 @@ Implements Temperature Scaling and Expected Calibration Error (ECE).
 
 from typing import Dict, List, Tuple
 import numpy as np
-import torch
-import torch.nn.functional as F
 from scipy.optimize import minimize
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 

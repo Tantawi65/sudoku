@@ -13,7 +13,7 @@ try:
     import torch.nn as nn
     import torch.nn.functional as F
     HAS_TORCH = True
-except ImportError:
+except Exception:
     HAS_TORCH = False
 
 
@@ -56,6 +56,10 @@ if HAS_TORCH:
                 scaled_logits = logits / self.temperature
                 probs = F.softmax(scaled_logits, dim=-1)
             return probs
+else:
+    # Fallback alias when torch is not available
+    DigitCNN = None
+
 
 
 from sklearn.neural_network import MLPClassifier

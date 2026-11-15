@@ -8,8 +8,8 @@
           "nodes_expanded_std": 0.0,
           "nodes_generated_mean": 1.0,
           "nodes_generated_std": 0.0,
-          "time_mean": 0.028112339999999958,
-          "time_std": 0.002253301262237258
+          "time_mean": 0.028069500000000015,
+          "time_std": 0.002198724476600025
         },
         "1": {
           "recovery_rate_mean": 1.0,
@@ -17,8 +17,8 @@
           "nodes_expanded_std": 0.0,
           "nodes_generated_mean": 7.0,
           "nodes_generated_std": 0.0,
-          "time_mean": 0.028151879999999973,
-          "time_std": 0.002937993432531674
+          "time_mean": 0.02748962000000006,
+          "time_std": 0.0019070451031896925
         },
         "2": {
           "recovery_rate_mean": 1.0,
@@ -26,8 +26,8 @@
           "nodes_expanded_std": 0.39999999999999997,
           "nodes_generated_mean": 24.4,
           "nodes_generated_std": 7.683749084919419,
-          "time_mean": 0.03021352000000006,
-          "time_std": 0.001986590022526134
+          "time_mean": 0.030489859999999914,
+          "time_std": 0.0031739326688511225
         },
         "3": {
           "recovery_rate_mean": 1.0,
@@ -35,8 +35,8 @@
           "nodes_expanded_std": 0.7999999999999999,
           "nodes_generated_mean": 77.8,
           "nodes_generated_std": 20.922714928995234,
-          "time_mean": 0.03370842000000003,
-          "time_std": 0.0025796161353193034
+          "time_mean": 0.03690294000000009,
+          "time_std": 0.002649724457825761
         },
         "4": {
           "recovery_rate_mean": 1.0,
@@ -44,8 +44,8 @@
           "nodes_expanded_std": 1.9595917942265424,
           "nodes_generated_mean": 188.8,
           "nodes_generated_std": 64.27565635604198,
-          "time_mean": 0.045447380000000016,
-          "time_std": 0.004829391202791561
+          "time_mean": 0.04908292000000016,
+          "time_std": 0.005247339310698346
         }
       },
       "Greedy": {
@@ -55,8 +55,8 @@
           "nodes_expanded_std": 0.0,
           "nodes_generated_mean": 1.0,
           "nodes_generated_std": 0.0,
-          "time_mean": 0.026717780000000003,
-          "time_std": 0.001924091825667305
+          "time_mean": 0.02881865999999995,
+          "time_std": 0.0016628671150755575
         },
         "1": {
           "recovery_rate_mean": 1.0,
@@ -64,8 +64,8 @@
           "nodes_expanded_std": 1.469693845669907,
           "nodes_generated_mean": 12.4,
           "nodes_generated_std": 6.681317235396026,
-          "time_mean": 0.032502259999999984,
-          "time_std": 0.011223686025116787
+          "time_mean": 0.03331528000000006,
+          "time_std": 0.010236978390013399
         },
         "2": {
           "recovery_rate_mean": 0.8,
@@ -73,8 +73,8 @@
           "nodes_expanded_std": 50.835420722169694,
           "nodes_generated_mean": 59.2,
           "nodes_generated_std": 54.8795043709398,
-          "time_mean": 0.04600372000000004,
-          "time_std": 0.02019367593692642
+          "time_mean": 0.046959799999999996,
+          "time_std": 0.021389977231030283
         },
         "3": {
           "recovery_rate_mean": 0.8,
@@ -82,8 +82,8 @@
           "nodes_expanded_std": 43.88348208608792,
           "nodes_generated_mean": 82.6,
           "nodes_generated_std": 44.51336877837937,
-          "time_mean": 0.06624305999999995,
-          "time_std": 0.03762298065053321
+          "time_mean": 0.05800574000000003,
+          "time_std": 0.037851495629980206
         },
         "4": {
           "recovery_rate_mean": 0.8,
@@ -91,8 +91,8 @@
           "nodes_expanded_std": 93.27593473131212,
           "nodes_generated_mean": 231.0,
           "nodes_generated_std": 109.65035339660334,
-          "time_mean": 0.10038806000000004,
-          "time_std": 0.04077635435551349
+          "time_mean": 0.10663971999999995,
+          "time_std": 0.0466771708627419
         }
       },
       "AStar": {
@@ -102,8 +102,8 @@
           "nodes_expanded_std": 0.0,
           "nodes_generated_mean": 1.0,
           "nodes_generated_std": 0.0,
-          "time_mean": 0.027507939999999897,
-          "time_std": 0.0017186049675244437
+          "time_mean": 0.026292400000000084,
+          "time_std": 0.0021360242339449106
         },
         "1": {
           "recovery_rate_mean": 1.0,
@@ -111,8 +111,8 @@
           "nodes_expanded_std": 0.0,
           "nodes_generated_mean": 7.0,
           "nodes_generated_std": 0.0,
-          "time_mean": 0.02889966000000004,
-          "time_std": 0.001983048109956054
+          "time_mean": 0.028194519999999956,
+          "time_std": 0.0018898648410931075
         },
         "2": {
           "recovery_rate_mean": 1.0,
@@ -120,8 +120,8 @@
           "nodes_expanded_std": 0.39999999999999997,
           "nodes_generated_mean": 23.6,
           "nodes_generated_std": 7.310266752998826,
-          "time_mean": 0.030080579999999867,
-          "time_std": 0.0018943964277839248
+          "time_mean": 0.028762120000000023,
+          "time_std": 0.0015283447744537297
         },
         "3": {
           "recovery_rate_mean": 1.0,
@@ -129,8 +129,8 @@
           "nodes_expanded_std": 0.7999999999999999,
           "nodes_generated_mean": 73.4,
           "nodes_generated_std": 19.754493159785195,
-          "time_mean": 0.034817000000000056,
-          "time_std": 0.0028100470672214922
+          "time_mean": 0.0384398,
+          "time_std": 0.00326205487691408
         },
         "4": {
           "recovery_rate_mean": 1.0,
@@ -138,8 +138,8 @@
           "nodes_expanded_std": 1.9595917942265424,
           "nodes_generated_mean": 175.0,
           "nodes_generated_std": 60.37880422797391,
-          "time_mean": 0.04609911999999996,
-          "time_std": 0.0068237863446624246
+          "time_mean": 0.04706049999999986,
+          "time_std": 0.006216763699868411
         }
       }
     },
@@ -150,31 +150,31 @@
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.024553900000000017
+            "time": 0.02872169999999996
           },
           {
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.026735500000000023
+            "time": 0.03178780000000003
           },
           {
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.029637799999999714
+            "time": 0.02805180000000007
           },
           {
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.028657899999999792
+            "time": 0.02542029999999995
           },
           {
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.030976600000000243
+            "time": 0.026365900000000053
           }
         ],
         "1": [
@@ -182,31 +182,31 @@
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.025422499999999904
+            "time": 0.030857199999999807
           },
           {
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.026092600000000132
+            "time": 0.025851700000000033
           },
           {
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.02955489999999994
+            "time": 0.028330600000000317
           },
           {
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.033292099999999714
+            "time": 0.026477600000000212
           },
           {
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.02639730000000018
+            "time": 0.025930999999999926
           }
         ],
         "2": [
@@ -214,31 +214,31 @@
             "recovered": 1,
             "nodes_expanded": 4,
             "nodes_generated": 25,
-            "time": 0.03195519999999996
+            "time": 0.03623620000000005
           },
           {
             "recovered": 1,
             "nodes_expanded": 4,
             "nodes_generated": 31,
-            "time": 0.026864099999999835
+            "time": 0.026665899999999798
           },
           {
             "recovered": 1,
             "nodes_expanded": 3,
             "nodes_generated": 10,
-            "time": 0.032495900000000244
+            "time": 0.028888400000000036
           },
           {
             "recovered": 1,
             "nodes_expanded": 4,
             "nodes_generated": 31,
-            "time": 0.029728200000000093
+            "time": 0.030563899999999755
           },
           {
             "recovered": 1,
             "nodes_expanded": 4,
             "nodes_generated": 25,
-            "time": 0.030024200000000167
+            "time": 0.030094899999999924
           }
         ],
         "3": [
@@ -246,31 +246,31 @@
             "recovered": 1,
             "nodes_expanded": 8,
             "nodes_generated": 85,
-            "time": 0.03637539999999995
+            "time": 0.037127800000000155
           },
           {
             "recovered": 1,
             "nodes_expanded": 8,
             "nodes_generated": 97,
-            "time": 0.036877999999999966
+            "time": 0.03975200000000001
           },
           {
             "recovered": 1,
             "nodes_expanded": 6,
             "nodes_generated": 37,
-            "time": 0.03004490000000004
+            "time": 0.03327120000000017
           },
           {
             "recovered": 1,
             "nodes_expanded": 8,
             "nodes_generated": 85,
-            "time": 0.03221530000000028
+            "time": 0.03978880000000018
           },
           {
             "recovered": 1,
             "nodes_expanded": 8,
             "nodes_generated": 85,
-            "time": 0.033028499999999905
+            "time": 0.034574899999999964
           }
         ],
         "4": [
@@ -278,31 +278,31 @@
             "recovered": 1,
             "nodes_expanded": 16,
             "nodes_generated": 241,
-            "time": 0.050692699999999924
+            "time": 0.05747950000000013
           },
           {
             "recovered": 1,
             "nodes_expanded": 16,
             "nodes_generated": 241,
-            "time": 0.047311799999999904
+            "time": 0.05141350000000022
           },
           {
             "recovered": 1,
             "nodes_expanded": 12,
             "nodes_generated": 100,
-            "time": 0.03936189999999984
+            "time": 0.04404260000000004
           },
           {
             "recovered": 1,
             "nodes_expanded": 16,
             "nodes_generated": 241,
-            "time": 0.04983770000000032
+            "time": 0.049414700000000256
           },
           {
             "recovered": 1,
             "nodes_expanded": 12,
             "nodes_generated": 121,
-            "time": 0.04003280000000009
+            "time": 0.043064300000000166
           }
         ]
       },
@@ -312,31 +312,31 @@
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.024498100000000078
+            "time": 0.02971009999999996
           },
           {
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.024302100000000104
+            "time": 0.030373800000000006
           },
           {
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.0276616999999999
+            "time": 0.030375899999999678
           },
           {
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.0287115
+            "time": 0.026523300000000027
           },
           {
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.028415499999999927
+            "time": 0.027110200000000084
           }
         ],
         "1": [
@@ -344,31 +344,31 @@
             "recovered": 1,
             "nodes_expanded": 5,
             "nodes_generated": 22,
-            "time": 0.026234200000000096
+            "time": 0.03233679999999994
           },
           {
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.024906799999999896
+            "time": 0.023336500000000093
           },
           {
             "recovered": 1,
             "nodes_expanded": 5,
             "nodes_generated": 19,
-            "time": 0.054731900000000167
+            "time": 0.05280420000000019
           },
           {
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.026954799999999945
+            "time": 0.027147799999999833
           },
           {
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.02968359999999981
+            "time": 0.03095110000000023
           }
         ],
         "2": [
@@ -376,31 +376,31 @@
             "recovered": 1,
             "nodes_expanded": 132,
             "nodes_generated": 166,
-            "time": 0.06337550000000003
+            "time": 0.06333860000000002
           },
           {
             "recovered": 1,
             "nodes_expanded": 3,
             "nodes_generated": 22,
-            "time": 0.02943640000000003
+            "time": 0.02713769999999993
           },
           {
             "recovered": 1,
             "nodes_expanded": 8,
             "nodes_generated": 34,
-            "time": 0.0769432000000001
+            "time": 0.08098769999999966
           },
           {
             "recovered": 0,
             "nodes_expanded": 6,
             "nodes_generated": 55,
-            "time": 0.03101989999999999
+            "time": 0.03232630000000025
           },
           {
             "recovered": 1,
             "nodes_expanded": 3,
             "nodes_generated": 19,
-            "time": 0.029243600000000036
+            "time": 0.03100870000000011
           }
         ],
         "3": [
@@ -408,31 +408,31 @@
             "recovered": 1,
             "nodes_expanded": 28,
             "nodes_generated": 70,
-            "time": 0.045415399999999995
+            "time": 0.041448200000000046
           },
           {
             "recovered": 1,
             "nodes_expanded": 4,
             "nodes_generated": 46,
-            "time": 0.06977959999999994
+            "time": 0.028420300000000065
           },
           {
             "recovered": 1,
             "nodes_expanded": 123,
             "nodes_generated": 163,
-            "time": 0.13729259999999988
+            "time": 0.1325027000000003
           },
           {
             "recovered": 0,
             "nodes_expanded": 42,
             "nodes_generated": 94,
-            "time": 0.04767419999999989
+            "time": 0.049417000000000044
           },
           {
             "recovered": 1,
             "nodes_expanded": 4,
             "nodes_generated": 40,
-            "time": 0.031053500000000067
+            "time": 0.03824049999999968
           }
         ],
         "4": [
@@ -440,31 +440,31 @@
             "recovered": 1,
             "nodes_expanded": 308,
             "nodes_generated": 415,
-            "time": 0.09745179999999998
+            "time": 0.10400770000000015
           },
           {
             "recovered": 1,
             "nodes_expanded": 19,
             "nodes_generated": 80,
-            "time": 0.06774039999999992
+            "time": 0.06367579999999995
           },
           {
             "recovered": 1,
             "nodes_expanded": 127,
             "nodes_generated": 178,
-            "time": 0.08258939999999981
+            "time": 0.085642
           },
           {
             "recovered": 0,
             "nodes_expanded": 118,
             "nodes_generated": 256,
-            "time": 0.07465120000000036
+            "time": 0.0834444999999997
           },
           {
             "recovered": 1,
             "nodes_expanded": 148,
             "nodes_generated": 226,
-            "time": 0.17950750000000015
+            "time": 0.19642859999999995
           }
         ]
       },
@@ -474,31 +474,31 @@
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.024315100000000034
+            "time": 0.02877109999999994
           },
           {
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.028069699999999864
+            "time": 0.022530700000000126
           },
           {
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.027246199999999998
+            "time": 0.027024300000000334
           },
           {
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.029006799999999888
+            "time": 0.025611099999999887
           },
           {
             "recovered": 1,
             "nodes_expanded": 0,
             "nodes_generated": 1,
-            "time": 0.028901899999999703
+            "time": 0.027524800000000127
           }
         ],
         "1": [
@@ -506,31 +506,31 @@
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.029776800000000048
+            "time": 0.029469600000000096
           },
           {
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.025527099999999914
+            "time": 0.026322999999999874
           },
           {
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.03105139999999995
+            "time": 0.028982699999999806
           },
           {
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.027881999999999962
+            "time": 0.025640000000000107
           },
           {
             "recovered": 1,
             "nodes_expanded": 2,
             "nodes_generated": 7,
-            "time": 0.030261000000000315
+            "time": 0.0305572999999999
           }
         ],
         "2": [
@@ -538,31 +538,31 @@
             "recovered": 1,
             "nodes_expanded": 4,
             "nodes_generated": 24,
-            "time": 0.032997799999999966
+            "time": 0.028973099999999974
           },
           {
             "recovered": 1,
             "nodes_expanded": 4,
             "nodes_generated": 30,
-            "time": 0.030231200000000014
+            "time": 0.027022800000000124
           },
           {
             "recovered": 1,
             "nodes_expanded": 3,
             "nodes_generated": 10,
-            "time": 0.02853339999999971
+            "time": 0.028392000000000195
           },
           {
             "recovered": 1,
             "nodes_expanded": 4,
             "nodes_generated": 30,
-            "time": 0.027608399999999644
+            "time": 0.031537600000000054
           },
           {
             "recovered": 1,
             "nodes_expanded": 4,
             "nodes_generated": 24,
-            "time": 0.031032100000000007
+            "time": 0.027885099999999774
           }
         ],
         "3": [
@@ -570,31 +570,31 @@
             "recovered": 1,
             "nodes_expanded": 8,
             "nodes_generated": 80,
-            "time": 0.035629300000000086
+            "time": 0.0409603999999999
           },
           {
             "recovered": 1,
             "nodes_expanded": 8,
             "nodes_generated": 92,
-            "time": 0.031949500000000075
+            "time": 0.03431720000000027
           },
           {
             "recovered": 1,
             "nodes_expanded": 6,
             "nodes_generated": 35,
-            "time": 0.031098599999999976
+            "time": 0.0432522999999998
           },
           {
             "recovered": 1,
             "nodes_expanded": 8,
             "nodes_generated": 80,
-            "time": 0.03793369999999996
+            "time": 0.03595650000000017
           },
           {
             "recovered": 1,
             "nodes_expanded": 8,
             "nodes_generated": 80,
-            "time": 0.03747390000000017
+            "time": 0.037712599999999874
           }
         ],
         "4": [
@@ -602,31 +602,31 @@
             "recovered": 1,
             "nodes_expanded": 16,
             "nodes_generated": 224,
-            "time": 0.05419819999999986
+            "time": 0.05535139999999994
           },
           {
             "recovered": 1,
             "nodes_expanded": 16,
             "nodes_generated": 224,
-            "time": 0.049477900000000075
+            "time": 0.0513903
           },
           {
             "recovered": 1,
             "nodes_expanded": 12,
             "nodes_generated": 91,
-            "time": 0.03842959999999973
+            "time": 0.037725499999999634
           },
           {
             "recovered": 1,
             "nodes_expanded": 16,
             "nodes_generated": 224,
-            "time": 0.05089330000000025
+            "time": 0.04798809999999998
           },
           {
             "recovered": 1,
             "nodes_expanded": 12,
             "nodes_generated": 112,
-            "time": 0.03749659999999988
+            "time": 0.04284719999999975
           }
         ]
       }
@@ -640,24 +640,24 @@
           "assignments_std": 22863.76078776193,
           "backtracks_mean": 27160.2,
           "backtracks_std": 22863.76078776193,
-          "time_mean": 0.5055824199999999,
-          "time_std": 0.4726242674773245
+          "time_mean": 0.48616287999999963,
+          "time_std": 0.3978225817453378
         },
         "30": {
           "assignments_mean": 1323.8,
           "assignments_std": 833.0623986232964,
           "backtracks_mean": 1272.8,
           "backtracks_std": 833.0623986232964,
-          "time_mean": 0.02686011999999973,
-          "time_std": 0.017903049766606553
+          "time_mean": 0.02294825999999972,
+          "time_std": 0.013451471807887474
         },
         "35": {
           "assignments_mean": 699.2,
           "assignments_std": 979.5834624982192,
           "backtracks_mean": 653.2,
           "backtracks_std": 979.5834624982192,
-          "time_mean": 0.018820280000000446,
-          "time_std": 0.029040680067408987
+          "time_mean": 0.012772679999999958,
+          "time_std": 0.01645481624381182
         }
       },
       "FC": {
@@ -666,24 +666,24 @@
           "assignments_std": 114.90100086596287,
           "backtracks_mean": 95.4,
           "backtracks_std": 114.90100086596287,
-          "time_mean": 0.003930539999999994,
-          "time_std": 0.002356945268435239
+          "time_mean": 0.00502015999999994,
+          "time_std": 0.0037813178478409873
         },
         "30": {
           "assignments_mean": 84.0,
           "assignments_std": 29.57701810527897,
           "backtracks_mean": 33.0,
           "backtracks_std": 29.57701810527897,
-          "time_mean": 0.0028144000000001057,
-          "time_std": 0.0008192675362788313
+          "time_mean": 0.0031194199999996287,
+          "time_std": 0.00030290013799954743
         },
         "35": {
           "assignments_mean": 46.8,
           "assignments_std": 1.5999999999999999,
           "backtracks_mean": 0.8,
           "backtracks_std": 1.6000000000000003,
-          "time_mean": 0.0018969600000000141,
-          "time_std": 0.00018892971814909624
+          "time_mean": 0.0018926200000001004,
+          "time_std": 0.0004283803235438727
         }
       },
       "AC3": {
@@ -692,24 +692,24 @@
           "assignments_std": 114.64902965136687,
           "backtracks_mean": 95.4,
           "backtracks_std": 114.90100086596287,
-          "time_mean": 0.03140385999999999,
-          "time_std": 0.0017570713071471409
+          "time_mean": 0.03197328000000059,
+          "time_std": 0.004623628580844042
         },
         "30": {
           "assignments_mean": 60.8,
           "assignments_std": 51.7818501021352,
           "backtracks_mean": 33.0,
           "backtracks_std": 29.57701810527897,
-          "time_mean": 0.027946020000000082,
-          "time_std": 0.0031611256320492
+          "time_mean": 0.026262419999999585,
+          "time_std": 0.0021434261465234435
         },
         "35": {
           "assignments_mean": 15.8,
           "assignments_std": 19.35355264544471,
           "backtracks_mean": 0.8,
           "backtracks_std": 1.6000000000000003,
-          "time_mean": 0.024590340000000134,
-          "time_std": 0.004256067111594598
+          "time_mean": 0.022962080000000107,
+          "time_std": 0.0011459065274270729
         }
       }
     },
@@ -719,31 +719,31 @@
           {
             "assignments": 29329,
             "backtracks": 29273,
-            "time": 0.46229540000000036,
+            "time": 0.5677832,
             "solved": 1
           },
           {
             "assignments": 2258,
             "backtracks": 2202,
-            "time": 0.03730689999999992,
+            "time": 0.04930499999999949,
             "solved": 1
           },
           {
             "assignments": 44419,
             "backtracks": 44363,
-            "time": 0.7234691,
+            "time": 0.7633985999999995,
             "solved": 1
           },
           {
             "assignments": 1102,
             "backtracks": 1046,
-            "time": 0.01794599999999935,
+            "time": 0.01825869999999874,
             "solved": 1
           },
           {
             "assignments": 58973,
             "backtracks": 58917,
-            "time": 1.2868946999999995,
+            "time": 1.0320689000000005,
             "solved": 1
           }
         ],
@@ -751,31 +751,31 @@
           {
             "assignments": 1197,
             "backtracks": 1146,
-            "time": 0.02100809999999953,
+            "time": 0.02137089999999997,
             "solved": 1
           },
           {
             "assignments": 1556,
             "backtracks": 1505,
-            "time": 0.039391799999999755,
+            "time": 0.027575899999999542,
             "solved": 1
           },
           {
             "assignments": 702,
             "backtracks": 651,
-            "time": 0.011350300000000146,
+            "time": 0.012569899999999024,
             "solved": 1
           },
           {
             "assignments": 382,
             "backtracks": 331,
-            "time": 0.007486899999999963,
+            "time": 0.007295900000000799,
             "solved": 1
           },
           {
             "assignments": 2782,
             "backtracks": 2731,
-            "time": 0.055063499999999266,
+            "time": 0.04592869999999927,
             "solved": 1
           }
         ],
@@ -783,31 +783,31 @@
           {
             "assignments": 62,
             "backtracks": 16,
-            "time": 0.0017628000000007304,
+            "time": 0.001751800000000081,
             "solved": 1
           },
           {
             "assignments": 390,
             "backtracks": 344,
-            "time": 0.006634100000000309,
+            "time": 0.009321299999999866,
             "solved": 1
           },
           {
             "assignments": 61,
             "backtracks": 15,
-            "time": 0.001522699999999766,
+            "time": 0.0015778999999991328,
             "solved": 1
           },
           {
             "assignments": 344,
             "backtracks": 298,
-            "time": 0.007485300000000805,
+            "time": 0.0060394999999999754,
             "solved": 1
           },
           {
             "assignments": 2639,
             "backtracks": 2593,
-            "time": 0.07669650000000061,
+            "time": 0.04517290000000074,
             "solved": 1
           }
         ]
@@ -817,31 +817,31 @@
           {
             "assignments": 381,
             "backtracks": 325,
-            "time": 0.0085784999999996,
+            "time": 0.012491100000000088,
             "solved": 1
           },
           {
             "assignments": 99,
             "backtracks": 43,
-            "time": 0.0025694999999998913,
+            "time": 0.003386800000000356,
             "solved": 1
           },
           {
             "assignments": 95,
             "backtracks": 39,
-            "time": 0.002619499999999775,
+            "time": 0.0025111999999989365,
             "solved": 1
           },
           {
             "assignments": 85,
             "backtracks": 29,
-            "time": 0.002372900000000122,
+            "time": 0.004122100000000017,
             "solved": 1
           },
           {
             "assignments": 97,
             "backtracks": 41,
-            "time": 0.003512300000000579,
+            "time": 0.0025896000000003028,
             "solved": 1
           }
         ],
@@ -849,31 +849,31 @@
           {
             "assignments": 51,
             "backtracks": 0,
-            "time": 0.0018710999999997924,
+            "time": 0.002835300000000096,
             "solved": 1
           },
           {
             "assignments": 128,
             "backtracks": 77,
-            "time": 0.004031799999999919,
+            "time": 0.0036807000000003143,
             "solved": 1
           },
           {
             "assignments": 98,
             "backtracks": 47,
-            "time": 0.0031582999999999473,
+            "time": 0.0031036999999987103,
             "solved": 1
           },
           {
             "assignments": 51,
             "backtracks": 0,
-            "time": 0.0019244999999994405,
+            "time": 0.0031081999999997834,
             "solved": 1
           },
           {
             "assignments": 92,
             "backtracks": 41,
-            "time": 0.0030863000000014296,
+            "time": 0.002869199999999239,
             "solved": 1
           }
         ],
@@ -881,31 +881,31 @@
           {
             "assignments": 46,
             "backtracks": 0,
-            "time": 0.00169499999999978,
+            "time": 0.0017471000000002235,
             "solved": 1
           },
           {
             "assignments": 50,
             "backtracks": 4,
-            "time": 0.0019537999999998945,
+            "time": 0.0017025999999997765,
             "solved": 1
           },
           {
             "assignments": 46,
             "backtracks": 0,
-            "time": 0.0017028000000003374,
+            "time": 0.0016429000000002247,
             "solved": 1
           },
           {
             "assignments": 46,
             "backtracks": 0,
-            "time": 0.0022065999999991703,
+            "time": 0.0027449999999991093,
             "solved": 1
           },
           {
             "assignments": 46,
             "backtracks": 0,
-            "time": 0.0019266000000008887,
+            "time": 0.0016255000000011677,
             "solved": 1
           }
         ]
@@ -915,31 +915,31 @@
           {
             "assignments": 374,
             "backtracks": 325,
-            "time": 0.03405669999999983,
+            "time": 0.03858139999999999,
             "solved": 1
           },
           {
             "assignments": 99,
             "backtracks": 43,
-            "time": 0.03156230000000004,
+            "time": 0.03415720000000011,
             "solved": 1
           },
           {
             "assignments": 85,
             "backtracks": 39,
-            "time": 0.029358600000000123,
+            "time": 0.029302400000000617,
             "solved": 1
           },
           {
             "assignments": 84,
             "backtracks": 29,
-            "time": 0.029624899999999954,
+            "time": 0.02487630000000074,
             "solved": 1
           },
           {
             "assignments": 83,
             "backtracks": 41,
-            "time": 0.03241680000000002,
+            "time": 0.03294910000000151,
             "solved": 1
           }
         ],
@@ -947,31 +947,31 @@
           {
             "assignments": 0,
             "backtracks": 0,
-            "time": 0.032678299999999716,
+            "time": 0.026675199999999677,
             "solved": 1
           },
           {
             "assignments": 128,
             "backtracks": 77,
-            "time": 0.024640200000000334,
+            "time": 0.02485930000000014,
             "solved": 1
           },
           {
             "assignments": 85,
             "backtracks": 47,
-            "time": 0.024926300000000623,
+            "time": 0.027586299999999397,
             "solved": 1
           },
           {
             "assignments": 0,
             "backtracks": 0,
-            "time": 0.03051080000000006,
+            "time": 0.029179799999999645,
             "solved": 1
           },
           {
             "assignments": 91,
             "backtracks": 41,
-            "time": 0.02697449999999968,
+            "time": 0.023011499999999074,
             "solved": 1
           }
         ],
@@ -979,31 +979,31 @@
           {
             "assignments": 0,
             "backtracks": 0,
-            "time": 0.025293999999999706,
+            "time": 0.02489920000000012,
             "solved": 1
           },
           {
             "assignments": 40,
             "backtracks": 4,
-            "time": 0.019799500000000414,
+            "time": 0.021593800000000662,
             "solved": 1
           },
           {
             "assignments": 0,
             "backtracks": 0,
-            "time": 0.020563800000000576,
+            "time": 0.02233760000000018,
             "solved": 1
           },
           {
             "assignments": 0,
             "backtracks": 0,
-            "time": 0.025647700000000384,
+            "time": 0.022465799999999092,
             "solved": 1
           },
           {
             "assignments": 39,
             "backtracks": 0,
-            "time": 0.031646699999999583,
+            "time": 0.02351400000000048,
             "solved": 1
           }
         ]
@@ -1016,22 +1016,22 @@
         "recovery_rate_mean": 1.0,
         "nodes_expanded_mean": 3.8,
         "nodes_expanded_std": 0.39999999999999997,
-        "time_mean": 0.03353697999999987,
-        "time_std": 0.0015184269062418654
+        "time_mean": 0.02903827999999926,
+        "time_std": 0.0017929214488092559
       },
       "No_Correction": {
         "recovery_rate_mean": 0.0,
         "nodes_expanded_mean": 0.0,
         "nodes_expanded_std": 0.0,
-        "time_mean": 0.0010811799999999039,
-        "time_std": 0.00022260030009015167
+        "time_mean": 0.0008179800000000625,
+        "time_std": 0.00013331533145113052
       },
       "Random_Correction": {
         "recovery_rate_mean": 0.2,
         "nodes_expanded_mean": 276.4,
         "nodes_expanded_std": 313.83600813163554,
-        "time_mean": 0.19417599999999952,
-        "time_std": 0.07696993308148331
+        "time_mean": 0.15124100000000026,
+        "time_std": 0.05517135567785183
       }
     },
     "raw": {
@@ -1039,81 +1039,81 @@
         {
           "recovered": 1,
           "nodes_expanded": 4,
-          "time": 0.03309949999999873
+          "time": 0.027050499999999644
         },
         {
           "recovered": 1,
           "nodes_expanded": 4,
-          "time": 0.03175680000000014
+          "time": 0.027273899999999074
         },
         {
           "recovered": 1,
           "nodes_expanded": 3,
-          "time": 0.03377389999999991
+          "time": 0.031758299999999906
         },
         {
           "recovered": 1,
           "nodes_expanded": 4,
-          "time": 0.036280899999999505
+          "time": 0.02882039999999897
         },
         {
           "recovered": 1,
           "nodes_expanded": 4,
-          "time": 0.032773800000001074
+          "time": 0.030288299999998713
         }
       ],
       "No_Correction": [
         {
           "recovered": 0,
           "nodes_expanded": 0,
-          "time": 0.0013254000000006982
+          "time": 0.001082699999999548
         },
         {
           "recovered": 0,
           "nodes_expanded": 0,
-          "time": 0.001336000000000226
+          "time": 0.0007564000000002125
         },
         {
           "recovered": 0,
           "nodes_expanded": 0,
-          "time": 0.0009168999999999983
+          "time": 0.0007748000000002975
         },
         {
           "recovered": 0,
           "nodes_expanded": 0,
-          "time": 0.0007720999999989431
+          "time": 0.0007250000000009749
         },
         {
           "recovered": 0,
           "nodes_expanded": 0,
-          "time": 0.001055499999999654
+          "time": 0.00075099999999928
         }
       ],
       "Random_Correction": [
         {
           "recovered": 0,
           "nodes_expanded": 60,
-          "time": 0.09763289999999891
+          "time": 0.07898419999999895
         },
         {
           "recovered": 1,
           "nodes_expanded": 67,
-          "time": 0.12332490000000007
+          "time": 0.10000940000000114
         },
         {
           "recovered": 0,
           "nodes_expanded": 19,
-          "time": 0.18823729999999905
+          "time": 0.15807150000000014
         },
         {
           "recovered": 0,
           "nodes_expanded": 844,
-          "time": 0.29142519999999905
+          "time": 0.19340700000000055
         },
         {
           "recovered": 0,
           "nodes_expanded": 392,
-          "time": 0.27025970000000044
+          "time": 0.22573290000000057
         }
       ]
     }
