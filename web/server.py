@@ -301,6 +301,102 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
     }
 
 
+def run_live_comparison(scenario_id: str) -> dict:
+    """
+    Executes live head-to-head comparison of:
+    1. Search: A* vs UCS vs Greedy (Nodes, Time, Corrections) [Experiment 1 Live]
+    2. CSP: Pure Backtracking vs FC vs AC-3 (Assignments, Backtracks, Time) [Experiment 2 Live]
+    3. Guidance: NN-Guided vs Flat Guidance vs Direct CSP [Experiment 3 Live]
+    directly on the active scenario board.
+    """
+    base_data = run_live_scenario(scenario_id, search_algo="astar", csp_mode="FC")
+    grid = [row[:] for row in base_data["initial_grid"]]
+    inferences = base_data["cell_inferences"]
+    probs = {tuple(map(int, k.split(","))): v["all_probs"] for k, v in inferences.items()}
+
+    prob_model = CorrectionSearchProblem(grid, probs, max_corrections=3)
+    conflicts = prob_model.get_conflicts(grid)
+
+    # 1. LIVE SEARCH COMPARISON (Exp 1 on this exact board)
+    exp1_live = []
+    corrected_grid = [row[:] for row in grid]
+    for algo_name, solver_cls in [("A* Search", AStarSolver), ("UCS (Uniform Cost)", UCSSolver), ("Greedy Best-First", GreedySolver)]:
+        s = solver_cls()
+        succ, node, _ = s.search(prob_model)
+        exp1_live.append({
+            "algorithm": algo_name,
+            "success": bool(succ),
+            "nodes_expanded": int(s.nodes_expanded),
+            "nodes_generated": int(s.nodes_generated),
+            "time_ms": round(s.elapsed_time * 1000.0, 2),
+            "corrections_count": len(node.corrections) if node else 0
+        })
+        if algo_name == "A* Search" and succ and node:
+            for cell, nv in node.corrections:
+                corrected_grid[cell[0]][cell[1]] = nv
+
+    # 2. LIVE CSP COMPARISON (Exp 2 on this exact board)
+    exp2_live = []
+    test_csp_grid = corrected_grid if conflicts else grid
+    for mode, label in [("BT", "Pure Backtracking"), ("FC", "Forward Checking + MRV"), ("AC3", "AC-3 + Forward Checking")]:
+        solver = UnifiedCSPSolver(mode=mode)
+        csp = SudokuCSP(test_csp_grid)
+        sol = solver.solve(csp)
+        exp2_live.append({
+            "mode": mode,
+            "label": label,
+            "solved": bool(sol is not None),
+            "assignments": int(solver.assignments),
+            "backtracks": int(solver.backtracks),
+            "time_ms": round(solver.elapsed_time * 1000.0, 2)
+        })
+
+    # 3. LIVE GUIDANCE IMPACT (Exp 3 on this exact board)
+    exp3_live = []
+    # Guided A*
+    s_guided = AStarSolver()
+    succ_g, _, _ = s_guided.search(prob_model)
+    exp3_live.append({
+        "strategy": "NN-Guided (A*)",
+        "description": "Uses calibrated neural probabilities as step costs",
+        "success": bool(succ_g),
+        "nodes_expanded": int(s_guided.nodes_expanded),
+        "time_ms": round(s_guided.elapsed_time * 1000.0, 2)
+    })
+
+    # Flat uninformative guidance
+    flat_probs = {c: {d: 1.0 / 9.0 for d in range(1, 10)} for c in probs.keys()}
+    prob_flat = CorrectionSearchProblem(grid, flat_probs, max_corrections=3)
+    s_flat = AStarSolver()
+    succ_f, _, _ = s_flat.search(prob_flat)
+    exp3_live.append({
+        "strategy": "Random Guidance",
+        "description": "Uniform flat probabilities without neural confidence",
+        "success": bool(succ_f),
+        "nodes_expanded": int(s_flat.nodes_expanded),
+        "time_ms": round(s_flat.elapsed_time * 1000.0, 2)
+    })
+
+    # No correction (Direct CSP)
+    s_direct = UnifiedCSPSolver(mode="FC")
+    sol_d = s_direct.solve(SudokuCSP(grid))
+    exp3_live.append({
+        "strategy": "No Correction",
+        "description": "Direct CSP attempt on uncorrected readings",
+        "success": bool(sol_d is not None and not conflicts),
+        "nodes_expanded": 0,
+        "time_ms": round(s_direct.elapsed_time * 1000.0, 2)
+    })
+
+    return {
+        "scenario_id": scenario_id,
+        "has_conflicts": bool(conflicts),
+        "experiment_1_search": exp1_live,
+        "experiment_2_csp": exp2_live,
+        "experiment_3_guidance": exp3_live
+    }
+
+
 class CustomHandler(SimpleHTTPRequestHandler):
     """Serves static files and live AI API endpoints."""
 
@@ -323,6 +419,24 @@ class CustomHandler(SimpleHTTPRequestHandler):
             else:
                 self.send_response(404)
                 self.end_headers()
+            return
+
+        if parsed.path == "/api/live_compare":
+            params = urllib.parse.parse_qs(parsed.query)
+            scenario_id = params.get("scenario", ["1"])[0]
+            try:
+                result = run_live_comparison(scenario_id)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                self.end_headers()
+                self.wfile.write(json.dumps(result).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
             return
 
         if parsed.path == "/api/solve":
