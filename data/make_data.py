@@ -69,6 +69,10 @@ def prepare_mnist(
 
     if os.path.exists(out_file):
         data = np.load(out_file)
+        print(f"Dataset already prepared: {out_file}", flush=True)
+        print(f"  Train samples: {data['x_train'].shape[0]} (digits 1-9)", flush=True)
+        print(f"  Val samples:   {data['x_val'].shape[0]}", flush=True)
+        print(f"  Test samples:  {data['x_test'].shape[0]}", flush=True)
         return (
             data["x_train"], data["y_train"],
             data["x_val"], data["y_val"],
