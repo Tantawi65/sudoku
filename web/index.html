@@ -874,7 +874,8 @@
     chip.className   = "info-chip";
 
     try {
-      const r = await fetch(`/api/solve?scenario=${id}`);
+      const timestamp = Date.now();
+      const r = await fetch(`/api/solve?scenario=${id}&_t=${timestamp}`);
       if (r.ok) {
         liveData = await r.json();
         chip.textContent = "Engine: live Python server (port 8000)";
@@ -918,18 +919,66 @@
 
   /* -- offline fallback data -- */
   function applyFallback() {
-    gridData = BASE.map(r => [...r]);
+    let puz = BASE.map(r => [...r]);
+    let sol = SOLUTION.map(r => [...r]);
 
-    if (currentScenario === "1") gridData[0][0] = 6;
-    else if (currentScenario === "2") { gridData[0][0] = 6; gridData[0][4] = 9; }
-    else if (currentScenario === "4") {
-      gridData = [
+    if (currentScenario === "1") {
+      puz[0][0] = 6;
+    } else if (currentScenario === "2") {
+      puz[0][0] = 6;
+      puz[0][4] = 9;
+    } else if (currentScenario === "4") {
+      puz = [
         [0,0,0,3,4,0,0,0,1],[0,8,0,6,0,0,0,3,0],[0,0,5,0,0,8,0,0,0],
         [0,5,0,4,0,9,0,0,0],[6,0,3,0,0,1,0,0,0],[0,4,2,0,0,0,0,6,0],
         [2,0,9,0,0,0,0,0,3],[8,0,0,0,0,0,0,0,9],[0,0,0,0,9,0,6,2,0]
       ];
+      sol = BENCH_SOL.map(r => [...r]);
+    } else if (currentScenario === "5" || currentScenario === "6") {
+      // 100% mathematically valid client-side random Sudoku generation
+      const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+      for (let i = digits.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [digits[i], digits[j]] = [digits[j], digits[i]];
+      }
+      const map = { 0: 0 };
+      for (let d = 1; d <= 9; d++) map[d] = digits[d - 1];
+
+      puz = BASE.map(row => row.map(v => map[v]));
+      sol = SOLUTION.map(row => row.map(v => map[v]));
+
+      // Random band swaps within 3-row blocks
+      for (let b = 0; b < 3; b++) {
+        const r1 = b * 3 + Math.floor(Math.random() * 3);
+        const r2 = b * 3 + Math.floor(Math.random() * 3);
+        if (r1 !== r2) {
+          [puz[r1], puz[r2]] = [puz[r2], puz[r1]];
+          [sol[r1], sol[r2]] = [sol[r2], sol[r1]];
+        }
+      }
+
+      // Scenario 6: inject a duplicate conflict
+      if (currentScenario === "6") {
+        const clues = [];
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            if (puz[r][c] !== 0) clues.push([r, c]);
+          }
+        }
+        const target = clues[Math.floor(Math.random() * clues.length)];
+        const tr = target[0], tc = target[1];
+        let peerDigit = null;
+        for (let i = 0; i < 9; i++) {
+          if (i !== tc && puz[tr][i] !== 0) { peerDigit = puz[tr][i]; break; }
+          if (i !== tr && puz[i][tc] !== 0) { peerDigit = puz[i][tc]; break; }
+        }
+        if (peerDigit) puz[tr][tc] = peerDigit;
+      }
     }
-    initialGivens = gridData.map(r => [...r]);
+
+    gridData      = puz.map(r => [...r]);
+    initialGivens = puz.map(r => [...r]);
+    solvedGrid    = sol.map(r => [...r]);
 
     // Build synthetic inferences
     for (let r = 0; r < 9; r++) {
@@ -938,16 +987,23 @@
         if (v === 0) continue;
         let isAmb = false, alt = null;
         if (currentScenario === "1" && r===0 && c===0) { isAmb=true; alt=5; }
-        if (currentScenario === "2" && r===0 && c===0) { isAmb=true; alt=5; }
-        if (currentScenario === "2" && r===0 && c===4) { isAmb=true; alt=7; }
+        else if (currentScenario === "2" && r===0 && c===0) { isAmb=true; alt=5; }
+        else if (currentScenario === "2" && r===0 && c===4) { isAmb=true; alt=7; }
+
         const ap = {}; for (let d=1;d<=9;d++) ap[d]=0.001;
-        if (isAmb) { ap[v]=0.535; ap[alt]=0.463; }
-        else        { ap[v]=0.982; const rem=0.018/8; for(let d=1;d<=9;d++) if(d!==v) ap[d]=rem; }
+        if (isAmb) {
+          ap[v]=0.535; ap[alt]=0.463;
+        } else {
+          ap[v]=0.982;
+          const rem=0.018/8;
+          for(let d=1;d<=9;d++) if(d!==v) ap[d]=rem;
+        }
         const sorted = Object.entries(ap).sort((a,b)=>b[1]-a[1]);
         inferences[`${r},${c}`] = {
           topDigit: parseInt(sorted[0][0]), topProb: sorted[0][1],
           altDigit: parseInt(sorted[1][0]), altProb: sorted[1][1],
-          margin: sorted[0][1]-sorted[1][1], isAmbiguous: isAmb, allProbs: ap
+          margin: sorted[0][1]-sorted[1][1], isAmbiguous: isAmb, allProbs: ap,
+          mnistIndex: Math.floor(Math.random() * 9000) + 1
         };
       }
     }
@@ -1263,7 +1319,7 @@
       bt = currentScenario === "4" ? 43 : 0;
       time = currentScenario === "4" ? "3.5 ms" : "2.6 ms";
       assignments = currentScenario === "4" ? 99 : 51;
-      sg = currentScenario === "4" ? BENCH_SOL : SOLUTION;
+      sg = currentScenario === "4" ? BENCH_SOL : (solvedGrid || SOLUTION);
     }
 
     if (sg) {
