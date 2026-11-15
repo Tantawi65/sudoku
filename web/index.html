@@ -517,35 +517,32 @@
 
     <!-- Controls Panel -->
     <div class="panel">
-      <div class="panel-title">Test Scenario &amp; Course Requirements</div>
+      <div class="panel-title">Project Requirements &amp; Evaluation Scenarios</div>
       <div class="controls" style="margin-bottom:.5rem;">
         <label>Scenario:</label>
         <select id="scenario-sel" onchange="loadScenario(this.value)">
-          <option value="1">Scenario 1 &mdash; 1 Injected Misread at (0,0) [Patch #439]</option>
-          <option value="2">Scenario 2 &mdash; 2 Injected Misreads [Minimum Version Requirement]</option>
-          <option value="3">Scenario 3 &mdash; Base Board, Clean Reading (Direct CSP Solve)</option>
-          <option value="4">Scenario 4 &mdash; 25-Clue Sparse Benchmark Puzzle [Experiment 2 Requirement]</option>
-          <option value="5">Scenario 5 &mdash; 🎲 Random Board &amp; Clean MNIST Patches</option>
-          <option value="6">Scenario 6 &mdash; 🎲 Random Board with Injected Misread (Live Solve)</option>
+          <option value="0">[REQUIRED BASELINE] Clean MNIST Reading (0 Misreads)</option>
+          <option value="1" selected>[REQUIRED] 1 Injected Misread at Cell (0,0)</option>
+          <option value="2">[REQUIRED - MINIMUM VERSION CAP] 2 Injected Misreads at (0,0) and (0,4)</option>
+          <option value="4">[REQUIRED - EXP 2 BENCHMARK] 25-Clue Sparse Benchmark Puzzle</option>
         </select>
         <button class="btn btn-step"  onclick="advanceStep()">Next Step &rarr;</button>
         <button class="btn btn-run"   onclick="runAll()">Run All</button>
-        <button class="btn btn-step"  style="background:#5a3a7e;border-color:#5a3a7e;color:#fff;" onclick="loadRandomBoard()" title="Generate a brand-new random puzzle with random handwritten test images">🎲 Randomize</button>
         <button class="btn btn-reset" onclick="resetScenario()">Reset</button>
       </div>
 
       <div class="controls" style="margin-bottom:.6rem;flex-wrap:wrap;gap:.4rem;">
         <label>Algorithm:</label>
         <select id="algo-sel" onchange="resetScenario()" style="font-size:.82rem;">
-          <option value="astar">A* Search (Admissible Heuristic &mdash; Optional Extension)</option>
-          <option value="ucs">UCS (Uniform Cost Search &mdash; Minimum Version Requirement)</option>
-          <option value="greedy">Greedy Best-First Search (Experiment 1)</option>
+          <option value="ucs">[REQUIRED - MINIMUM VERSION] UCS (Uniform Cost Search)</option>
+          <option value="astar">[OPTIONAL EXTENSION] A* Search (Admissible Heuristic)</option>
+          <option value="greedy">[EXPERIMENT 1] Greedy Best-First Search</option>
         </select>
         <label style="margin-left:.3rem;">CSP Pruning:</label>
         <select id="csp-sel" onchange="resetScenario()" style="font-size:.82rem;">
-          <option value="FC">Forward Checking + MRV (Recommended)</option>
-          <option value="BT">Pure Backtracking (BT &mdash; Experiment 2)</option>
-          <option value="AC3">AC-3 Pre-check + FC</option>
+          <option value="FC">[REQUIRED - MINIMUM VERSION] Forward Checking + MRV</option>
+          <option value="BT">[EXPERIMENT 2 BASELINE] Pure Backtracking (BT)</option>
+          <option value="AC3">[REQUIRED] AC-3 Pre-check + Forward Checking</option>
         </select>
         <button class="btn btn-step" style="background:#1e4a6e;border-color:#1e4a6e;color:#fff;font-size:.78rem;" onclick="openExpModal()">📊 3 Course Experiments</button>
       </div>
@@ -578,8 +575,8 @@
       <div class="step-header" onclick="toggleCard('s1')">
         <div class="step-num s1">1</div>
         <div class="step-title-block">
-          <strong>Neural Network Inference &amp; Confidence Analysis</strong>
-          <span>Run the trained MLP on each filled cell's 28&times;28 image patch</span>
+          <strong>Stage 1: Neural Network Inference &amp; Probability Calibration <span style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:#e8f5e9;color:#2e7d32;font-weight:700;">[REQUIRED: NN]</span> <span style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:#e0f2f1;color:#00695c;font-weight:700;">[OPTIONAL: Temperature Scaling]</span></strong>
+          <span>Extract 28&times;28 patches, evaluate MLP confidence distribution, and flag ambiguous digits</span>
         </div>
         <span class="step-badge pending" id="badge-s1">Not run</span>
       </div>
@@ -627,8 +624,8 @@
       <div class="step-header" onclick="toggleCard('s2')">
         <div class="step-num s2">2</div>
         <div class="step-title-block">
-          <strong>AC-3 Arc Consistency Check</strong>
-          <span>Verify that the current board reading is constraint-satisfiable</span>
+          <strong>Stage 2: AC-3 Arc Consistency Pre-Check <span style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:#e8eaf6;color:#283593;font-weight:700;">[REQUIRED: AC-3 Pre-check]</span></strong>
+          <span>Verify whether current board reading is constraint-satisfiable across all 810 directed arcs</span>
         </div>
         <span class="step-badge pending" id="badge-s2">Not run</span>
       </div>
@@ -662,8 +659,8 @@
       <div class="step-header" onclick="toggleCard('s3')">
         <div class="step-num s3">3</div>
         <div class="step-title-block">
-          <strong>A* State-Space Search &mdash; Minimal-Cost Digit Correction</strong>
-          <span>Find the cheapest set of clue substitutions that removes all conflicts</span>
+          <strong id="s3-card-title">Stage 3: Search-Based Clue Correction <span style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:#fce8e6;color:#c5221f;font-weight:700;">[REQUIRED: UCS]</span> <span style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:#e1f5fe;color:#0277bd;font-weight:700;">[OPTIONAL: A* Heuristic]</span></strong>
+          <span id="s3-card-desc">Find minimal-penalty clue corrections using selected search algorithm (UCS / A* / Greedy)</span>
         </div>
         <span class="step-badge pending" id="badge-s3">Not run</span>
       </div>
@@ -705,8 +702,8 @@
       <div class="step-header" onclick="toggleCard('s4')">
         <div class="step-num s4">4</div>
         <div class="step-title-block">
-          <strong>CSP Forward Checking &mdash; Complete the Puzzle</strong>
-          <span>Assign values to all 51 empty cells using backtracking + forward checking + MRV</span>
+          <strong id="s4-card-title">Stage 4: Full CSP Solver &mdash; Complete the Board <span style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:#e8f5e9;color:#2e7d32;font-weight:700;">[REQUIRED: Full CSP (FC + MRV)]</span></strong>
+          <span id="s4-card-desc">Assign values to all remaining blank cells using selected CSP engine</span>
         </div>
         <span class="step-badge pending" id="badge-s4">Not run</span>
       </div>
@@ -725,7 +722,7 @@
 
         <div class="output-title">Solver settings</div>
         <div class="small gap">
-          Algorithm: Backtracking + Forward Checking (FC) + MRV variable ordering<br>
+          Algorithm: <span id="s4-solver-label">Forward Checking (FC + MRV) [REQUIRED - MINIMUM VERSION]</span><br>
           Variables: 81 total &bull; Given: <span id="s4-givens">—</span> &bull; Empty: <span id="s4-empty">—</span>
         </div>
 
@@ -751,19 +748,6 @@
 
         <div class="sep"></div>
 
-        <div class="output-title">CSP algorithm comparison (25-clue benchmark)</div>
-        <div class="tbl-wrap">
-          <table>
-            <thead>
-              <tr><th>Algorithm</th><th>Assignments</th><th>Backtracks</th><th>Time</th><th>Pruning factor</th></tr>
-            </thead>
-            <tbody>
-              <tr><td><strong>Pure Backtracking</strong></td><td>2,258</td><td style="color:var(--warn);font-weight:700;">2,202</td><td>46.3 ms</td><td>baseline (1&times;)</td></tr>
-              <tr><td><strong>FC + MRV</strong></td><td>99</td><td style="color:var(--ok);font-weight:700;">43</td><td>3.5 ms</td><td style="color:var(--ok);font-weight:700;">51.2&times; fewer BTs</td></tr>
-              <tr><td><strong>AC-3 pre-check + FC</strong></td><td>99</td><td style="color:var(--ok);font-weight:700;">43</td><td>27.4 ms</td><td style="color:var(--ok);font-weight:700;">51.2&times; fewer BTs</td></tr>
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
 
@@ -832,21 +816,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr><td><strong>A* Search</strong></td><td>0</td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>0.00 &plusmn; 0.00</td><td>1.00 &plusmn; 0.00</td><td>26.29 ms</td></tr>
-            <tr><td><strong>A* Search</strong></td><td>1</td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>2.00 &plusmn; 0.00</td><td>7.00 &plusmn; 0.00</td><td>28.19 ms</td></tr>
-            <tr><td><strong>A* Search</strong></td><td>2</td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>3.80 &plusmn; 0.40</td><td>23.60 &plusmn; 7.31</td><td>28.76 ms</td></tr>
-            <tr><td><strong>A* Search</strong></td><td>3</td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>7.60 &plusmn; 0.80</td><td>73.40 &plusmn; 19.75</td><td>38.44 ms</td></tr>
-            <tr><td><strong>A* Search</strong></td><td>4</td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>14.40 &plusmn; 1.96</td><td>175.00 &plusmn; 60.38</td><td>47.06 ms</td></tr>
-            <tr style="border-top:1px dashed var(--border);"><td><strong>UCS (Min Req)</strong></td><td>0</td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>0.00 &plusmn; 0.00</td><td>1.00 &plusmn; 0.00</td><td>28.07 ms</td></tr>
-            <tr><td><strong>UCS (Min Req)</strong></td><td>1</td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>2.00 &plusmn; 0.00</td><td>7.00 &plusmn; 0.00</td><td>27.49 ms</td></tr>
-            <tr><td><strong>UCS (Min Req)</strong></td><td>2</td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>3.80 &plusmn; 0.40</td><td>24.40 &plusmn; 7.68</td><td>30.49 ms</td></tr>
-            <tr><td><strong>UCS (Min Req)</strong></td><td>3</td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>7.60 &plusmn; 0.80</td><td>77.80 &plusmn; 20.92</td><td>36.90 ms</td></tr>
-            <tr><td><strong>UCS (Min Req)</strong></td><td>4</td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>14.40 &plusmn; 1.96</td><td>188.80 &plusmn; 64.28</td><td>49.08 ms</td></tr>
-            <tr style="border-top:1px dashed var(--border);"><td><strong>Greedy</strong></td><td>0</td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>0.00 &plusmn; 0.00</td><td>1.00 &plusmn; 0.00</td><td>28.82 ms</td></tr>
-            <tr><td><strong>Greedy</strong></td><td>1</td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>3.20 &plusmn; 1.47</td><td>12.40 &plusmn; 6.68</td><td>33.32 ms</td></tr>
-            <tr><td><strong>Greedy</strong></td><td>2</td><td style="color:var(--warn);font-weight:700;">80.0%</td><td>30.40 &plusmn; 50.84</td><td>59.20 &plusmn; 54.88</td><td>46.96 ms</td></tr>
-            <tr><td><strong>Greedy</strong></td><td>3</td><td style="color:var(--warn);font-weight:700;">80.0%</td><td>40.20 &plusmn; 43.88</td><td>82.60 &plusmn; 44.51</td><td>58.01 ms</td></tr>
-            <tr><td><strong>Greedy</strong></td><td>4</td><td style="color:var(--warn);font-weight:700;">80.0%</td><td>144.00 &plusmn; 93.28</td><td>231.00 &plusmn; 109.65</td><td>106.64 ms</td></tr>
+            <tr><td colspan="6" style="text-align:center;padding:1rem;color:var(--muted);">Loading dynamic benchmark data from /api/experiments...</td></tr>
           </tbody>
         </table>
       </div>
@@ -860,15 +830,7 @@
             <tr><th>Solver Mode</th><th>Clues (Givens)</th><th>Assignments (Mean &plusmn; Std)</th><th>Backtracks (Mean &plusmn; Std)</th><th>Runtime (s)</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Pure BT</strong></td><td>25</td><td>27,216.2 &plusmn; 22,863.8</td><td style="color:var(--warn);font-weight:700;">27,160.2 &plusmn; 22,863.8</td><td>0.4862 s</td></tr>
-            <tr><td><strong>Pure BT</strong></td><td>30</td><td>1,323.8 &plusmn; 833.1</td><td style="color:var(--warn);font-weight:700;">1,272.8 &plusmn; 833.1</td><td>0.0229 s</td></tr>
-            <tr><td><strong>Pure BT</strong></td><td>35</td><td>699.2 &plusmn; 979.6</td><td style="color:var(--warn);font-weight:700;">653.2 &plusmn; 979.6</td><td>0.0128 s</td></tr>
-            <tr style="border-top:1px dashed var(--border);"><td><strong>FC + MRV</strong></td><td>25</td><td>151.4 &plusmn; 114.9</td><td style="color:var(--ok);font-weight:700;">95.4 &plusmn; 114.9</td><td>0.0050 s</td></tr>
-            <tr><td><strong>FC + MRV</strong></td><td>30</td><td>84.0 &plusmn; 29.6</td><td style="color:var(--ok);font-weight:700;">33.0 &plusmn; 29.6</td><td>0.0031 s</td></tr>
-            <tr><td><strong>FC + MRV</strong></td><td>35</td><td>46.8 &plusmn; 1.6</td><td style="color:var(--ok);font-weight:700;">0.8 &plusmn; 1.6</td><td>0.0019 s</td></tr>
-            <tr style="border-top:1px dashed var(--border);"><td><strong>AC-3 + FC</strong></td><td>25</td><td>145.0 &plusmn; 114.6</td><td style="color:var(--ok);font-weight:700;">95.4 &plusmn; 114.9</td><td>0.0320 s</td></tr>
-            <tr><td><strong>AC-3 + FC</strong></td><td>30</td><td>60.8 &plusmn; 51.8</td><td style="color:var(--ok);font-weight:700;">33.0 &plusmn; 29.6</td><td>0.0263 s</td></tr>
-            <tr><td><strong>AC-3 + FC</strong></td><td>35</td><td>15.8 &plusmn; 19.4</td><td style="color:var(--ok);font-weight:700;">0.8 &plusmn; 1.6</td><td>0.0230 s</td></tr>
+            <tr><td colspan="5" style="text-align:center;padding:1rem;color:var(--muted);">Loading dynamic benchmark data from /api/experiments...</td></tr>
           </tbody>
         </table>
       </div>
@@ -882,9 +844,7 @@
             <tr><th>Guidance Strategy</th><th>Recovery Rate (%)</th><th>Nodes Expanded (Mean &plusmn; Std)</th><th>Runtime (ms)</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>NN-Guided (A*)</strong></td><td style="color:var(--ok);font-weight:700;">100.0%</td><td>3.80 &plusmn; 0.40</td><td>29.04 ms</td></tr>
-            <tr><td><strong>Random Guidance (Flat Probs)</strong></td><td style="color:var(--warn);font-weight:700;">20.0%</td><td>276.40 &plusmn; 313.84</td><td>151.24 ms</td></tr>
-            <tr><td><strong>No Correction (Direct CSP)</strong></td><td style="color:var(--warn);font-weight:700;">0.0% (Unsolvable)</td><td>0.00 &plusmn; 0.00</td><td>0.82 ms</td></tr>
+            <tr><td colspan="4" style="text-align:center;padding:1rem;color:var(--muted);">Loading dynamic benchmark data from /api/experiments...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1066,46 +1026,6 @@
         [2,0,9,0,0,0,0,0,3],[8,0,0,0,0,0,0,0,9],[0,0,0,0,9,0,6,2,0]
       ];
       sol = BENCH_SOL.map(r => [...r]);
-    } else if (currentScenario === "5" || currentScenario === "6") {
-      // 100% mathematically valid client-side random Sudoku generation
-      const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-      for (let i = digits.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [digits[i], digits[j]] = [digits[j], digits[i]];
-      }
-      const map = { 0: 0 };
-      for (let d = 1; d <= 9; d++) map[d] = digits[d - 1];
-
-      puz = BASE.map(row => row.map(v => map[v]));
-      sol = SOLUTION.map(row => row.map(v => map[v]));
-
-      // Random band swaps within 3-row blocks
-      for (let b = 0; b < 3; b++) {
-        const r1 = b * 3 + Math.floor(Math.random() * 3);
-        const r2 = b * 3 + Math.floor(Math.random() * 3);
-        if (r1 !== r2) {
-          [puz[r1], puz[r2]] = [puz[r2], puz[r1]];
-          [sol[r1], sol[r2]] = [sol[r2], sol[r1]];
-        }
-      }
-
-      // Scenario 6: inject a duplicate conflict
-      if (currentScenario === "6") {
-        const clues = [];
-        for (let r = 0; r < 9; r++) {
-          for (let c = 0; c < 9; c++) {
-            if (puz[r][c] !== 0) clues.push([r, c]);
-          }
-        }
-        const target = clues[Math.floor(Math.random() * clues.length)];
-        const tr = target[0], tc = target[1];
-        let peerDigit = null;
-        for (let i = 0; i < 9; i++) {
-          if (i !== tc && puz[tr][i] !== 0) { peerDigit = puz[tr][i]; break; }
-          if (i !== tr && puz[i][tc] !== 0) { peerDigit = puz[i][tc]; break; }
-        }
-        if (peerDigit) puz[tr][tc] = peerDigit;
-      }
     }
 
     gridData      = puz.map(r => [...r]);
@@ -1170,15 +1090,7 @@
     });
   }
 
-  function loadRandomBoard() {
-    const sel = document.getElementById("scenario-sel");
-    let target = sel.value;
-    if (target !== "5" && target !== "6") {
-      target = "5";
-      sel.value = "5";
-    }
-    loadScenario(target);
-  }
+
 
   function clearS3Queue() {
     document.getElementById("s3-queue").innerHTML = '<p class="small">Run step 3 to see expansion.</p>';
@@ -1419,7 +1331,10 @@
     document.getElementById("s3-result").innerHTML = resultHtml;
     setBadge("s3", corrected.length>0 ? "done" : "done",
                    corrected.length>0 ? `${corrected.length} correction(s)` : "No change needed");
-    setPill("pill-s3", `Stage 3: A* (${nodes} nodes)`);
+    const algoSel = document.getElementById("algo-sel");
+    const algoVal = algoSel ? algoSel.value : "ucs";
+    const algoLabel = algoVal === "astar" ? "A*" : (algoVal === "greedy" ? "Greedy" : "UCS");
+    setPill("pill-s3", `Stage 3: ${algoLabel} (${nodes} nodes)`);
     setMeta("3 / 4", nodes, "—", time);
     renderGrid();
   }
@@ -1460,6 +1375,18 @@
       gridData = sg.map(r => [...r]);
       solvedGrid = sg;
       solved = true;
+    }
+
+    const cspSel = document.getElementById("csp-sel");
+    const cspVal = cspSel ? cspSel.value : "FC";
+    const solverLabels = {
+      "FC": "Forward Checking (FC + MRV) [REQUIRED - MINIMUM VERSION]",
+      "BT": "Pure Backtracking (BT) [EXPERIMENT 2 BASELINE]",
+      "AC3": "AC-3 Pre-check + Forward Checking (FC) [REQUIRED]"
+    };
+    const solverLabelEl = document.getElementById("s4-solver-label");
+    if (solverLabelEl) {
+      solverLabelEl.textContent = liveData && liveData.csp ? liveData.csp.mode : (solverLabels[cspVal] || cspVal);
     }
 
     const givens = initialGivens.reduce((s,row)=>s+row.filter(v=>v>0).length, 0);

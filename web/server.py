@@ -69,8 +69,12 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
       [0, 0, 0, 0, 8, 0, 0, 7, 9]
     ]
 
+    # Official project scenarios strictly matching PDF requirements:
+    # "0": Clean baseline reading (0 misreads - Page 15 Exp 1)
+    # "1": 1 injected misread (Up to 2 misreads requirement)
+    # "2": 2 injected misreads (Minimum Version Cap requirement)
+    # "4": 25-clue sparse benchmark puzzle (Page 15 Exp 2)
     if scenario_id == "4":
-        # 25-clue challenging benchmark puzzle
         grid = [
             [0, 0, 0, 3, 4, 0, 0, 0, 1],
             [0, 8, 0, 6, 0, 0, 0, 3, 0],
@@ -82,83 +86,47 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
             [8, 0, 0, 0, 0, 0, 0, 0, 9],
             [0, 0, 0, 0, 9, 0, 6, 2, 0]
         ]
-    elif scenario_id in ("5", "6", "random"):
-        # Fresh unique random puzzle generated on the fly
-        gen = SudokuGenerator(seed=None)
-        grid, _ = gen.generate_puzzle(num_givens=30)
     else:
         grid = [row[:] for row in base_puzzle]
 
     cell_inferences = {}
 
-    # Extract real test patches from MNIST if available
+    # Extract real test patches from MNIST
     x_test = data["x_test"] if data is not None else None
     y_test = data["y_test"] if data is not None else None
 
-    # Pre-index ALL MNIST images by class (all 9,020 test patches)
+    # Pre-index MNIST images by class
     digit_indices = {d: [] for d in range(1, 10)}
     if y_test is not None:
         for idx, lbl in enumerate(y_test):
             digit_indices[lbl].append(idx)
 
-    # For Scenario 6: pick 1 random clue to corrupt with a conflicting peer digit
-    target_corrupt = None
-    collide_digit = None
-    if scenario_id == "6":
-        import random
-        clues = [(r, c) for r in range(9) for c in range(9) if grid[r][c] != 0]
-        target_corrupt = random.choice(clues)
-        true_d = grid[target_corrupt[0]][target_corrupt[1]]
-        peer_digits = []
-        for i in range(9):
-            if i != target_corrupt[1] and grid[target_corrupt[0]][i] != 0:
-                peer_digits.append(grid[target_corrupt[0]][i])
-            if i != target_corrupt[0] and grid[i][target_corrupt[1]] != 0:
-                peer_digits.append(grid[i][target_corrupt[1]])
-        collide_digit = random.choice(peer_digits) if peer_digits else ((true_d % 9) + 1)
-
-    # Real ambiguous MNIST patches found in test set:
-    # Index 439 is a real MNIST handwritten '5' where the model predicts '6' (53.5%) vs '5' (46.3%)
-    # Index 293 is a real MNIST handwritten '9' where the model predicts '8' vs '9'
-    import random
+    # Real ambiguous MNIST test patches:
+    # Patch #439 is a real MNIST handwritten '5' predicted as '6' (53.5%) vs '5' (46.3%)
+    # Patch #293 is a real MNIST handwritten '7' predicted as '9' vs '7'
     for r in range(9):
         for c in range(9):
             val = grid[r][c]
             if val != 0:
                 sample_idx = -1
-                # Pick a real MNIST test patch
                 if r == 0 and c == 0 and scenario_id in ("1", "2") and x_test is not None:
                     sample_idx = 439
                     patch = x_test[439].reshape(28, 28)
                 elif r == 0 and c == 4 and scenario_id == "2" and x_test is not None:
                     sample_idx = 293
                     patch = x_test[293].reshape(28, 28)
-                elif scenario_id == "6" and (r, c) == target_corrupt and x_test is not None and digit_indices[collide_digit]:
-                    # Random misread patch from MNIST
-                    sample_idx = int(random.choice(digit_indices[collide_digit]))
-                    patch = x_test[sample_idx].reshape(28, 28)
-                elif scenario_id in ("5", "6", "random") and x_test is not None and digit_indices[val]:
-                    # Completely random MNIST test patch from dataset
-                    sample_idx = int(random.choice(digit_indices[val]))
-                    patch = x_test[sample_idx].reshape(28, 28)
                 elif x_test is not None and digit_indices[val]:
                     sample_idx = digit_indices[val][(r * 9 + c) % len(digit_indices[val])]
                     patch = x_test[sample_idx].reshape(28, 28)
                 else:
                     patch = np.zeros((28, 28), dtype=np.float32)
 
-                # Execute REAL model inference
+                # Execute REAL neural network inference
                 if clf.is_loaded and x_test is not None:
                     probs_dict = clf.predict_patch(patch)
                 else:
                     probs_dict = {d: 0.002 for d in range(1, 10)}
                     probs_dict[val] = 0.984
-
-                # For scenario 6 corrupted cell, ensure true digit has alternative probability
-                if scenario_id == "6" and (r, c) == target_corrupt:
-                    probs_dict[val] = max(probs_dict.get(val, 0.0), 0.44)
-                    tot = sum(probs_dict.values())
-                    probs_dict = {k: v / tot for k, v in probs_dict.items()}
 
                 sorted_p = sorted(probs_dict.items(), key=lambda x: x[1], reverse=True)
                 top_d, top_p = sorted_p[0]
@@ -166,12 +134,10 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
                 margin = top_p - alt_p
                 is_amb = (margin < 0.20)
 
-                # If this was an injected misread, the top predicted digit becomes the clue
+                # Injected misread: top predicted digit replaces clue to create conflict
                 if r == 0 and c == 0 and scenario_id in ("1", "2"):
                     grid[r][c] = top_d
                 elif r == 0 and c == 4 and scenario_id == "2":
-                    grid[r][c] = top_d
-                elif scenario_id == "6" and (r, c) == target_corrupt:
                     grid[r][c] = top_d
 
                 cell_inferences[f"{r},{c}"] = {
