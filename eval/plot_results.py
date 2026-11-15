@@ -33,7 +33,7 @@ def generate_markdown_tables(results_path: str = "eval/results/experiment_result
     strats = ["NN_Guided", "Random_Correction", "No_Correction"]
     labels = ["NN Guided (A*)", "Random Guidance", "No Correction"]
 
-    with open(table_file, "w") as f:
+    with open(table_file, "w", encoding="utf-8") as f:
         f.write("# Experimental Evaluation Tables (Mean ± Standard Deviation)\n\n")
 
         # Table 1

@@ -50,9 +50,9 @@ def get_classifier():
     return classifier, mnist_test_data
 
 
-def run_live_scenario(scenario_id: str) -> dict:
+def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: str = "FC") -> dict:
     """
-    Executes real inference, real AC-3, real A* search, and real CSP on actual MNIST test patches.
+    Executes real inference, real AC-3, real search (A*, UCS, Greedy), and real CSP on actual MNIST test patches.
     """
     clf, data = get_classifier()
 
@@ -205,17 +205,27 @@ def run_live_scenario(scenario_id: str) -> dict:
         for c1, c2 in conflict_pairs
     ]
 
-    # 2. Run REAL A* Search if conflicts exist
+    # 2. Run REAL Search if conflicts exist
     search_corrections = []
     nodes_expanded = 0
     search_time_ms = 0.0
     queue_trace = []
+    algo_label = "A*"
 
     if conflicts_list:
-        astar = AStarSolver()
-        succ, node, _ = astar.search(prob_model)
-        nodes_expanded = astar.nodes_expanded
-        search_time_ms = astar.elapsed_time * 1000.0
+        if search_algo.lower() == "ucs":
+            searcher = UCSSolver()
+            algo_label = "UCS (Uniform Cost Search)"
+        elif search_algo.lower() == "greedy":
+            searcher = GreedySolver()
+            algo_label = "Greedy Best-First Search"
+        else:
+            searcher = AStarSolver()
+            algo_label = "A* Search"
+
+        succ, node, _ = searcher.search(prob_model)
+        nodes_expanded = searcher.nodes_expanded
+        search_time_ms = searcher.elapsed_time * 1000.0
 
         if succ and node:
             for cell, new_v in node.corrections:
@@ -252,10 +262,14 @@ def run_live_scenario(scenario_id: str) -> dict:
                     {"iter": 2, "state": ", ".join(f"Cell {c['cell']} -> {c['to']}" for c in search_corrections), "g": f"{total_cost:.3f}", "h": "0.000", "f": f"{total_cost:.3f}", "goal": "SUCCESS (0 Conflicts, AC-3 Solvable)"}
                 ]
 
-    # 3. Run REAL CSP Forward Checking Solver
+    # 3. Run REAL CSP Solver with selected pruning mode
+    valid_modes = {"FC": "FC", "BT": "BT", "AC3": "AC3"}
+    sel_mode = valid_modes.get(csp_mode.upper(), "FC")
     csp_solve = SudokuCSP(grid)
-    solver = UnifiedCSPSolver(mode="FC")
+    solver = UnifiedCSPSolver(mode=sel_mode)
     solved_board = solver.solve(csp_solve)
+
+    mode_label = "Forward Checking (FC + MRV)" if sel_mode == "FC" else ("Pure Backtracking (BT)" if sel_mode == "BT" else "AC-3 Pre-check + FC")
 
     return {
         "scenario_id": scenario_id,
@@ -271,14 +285,14 @@ def run_live_scenario(scenario_id: str) -> dict:
             "conflicts": conflicts_list
         },
         "search": {
-            "algorithm": "A*",
+            "algorithm": algo_label,
             "nodes_expanded": int(nodes_expanded),
             "elapsed_time_ms": float(search_time_ms),
             "corrections": search_corrections,
             "queue_trace": queue_trace
         },
         "csp": {
-            "mode": "Forward Checking (FC + MRV)",
+            "mode": mode_label,
             "assignments": int(solver.assignments),
             "backtracks": int(solver.backtracks),
             "elapsed_time_ms": float(solver.elapsed_time * 1000.0),
@@ -299,9 +313,11 @@ class CustomHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/solve":
             params = urllib.parse.parse_qs(parsed.query)
             scenario_id = params.get("scenario", ["1"])[0]
+            search_algo = params.get("algo", ["astar"])[0]
+            csp_mode = params.get("csp_mode", ["FC"])[0]
 
             try:
-                result = run_live_scenario(scenario_id)
+                result = run_live_scenario(scenario_id, search_algo=search_algo, csp_mode=csp_mode)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", "*")
