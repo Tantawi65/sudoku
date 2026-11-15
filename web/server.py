@@ -310,6 +310,21 @@ class CustomHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
 
+        if parsed.path == "/api/experiments":
+            exp_file = os.path.join(PROJECT_DIR, "eval", "results", "experiment_results.json")
+            if os.path.exists(exp_file):
+                with open(exp_file, "r", encoding="utf-8") as f:
+                    exp_data = json.load(f)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps(exp_data).encode("utf-8"))
+            else:
+                self.send_response(404)
+                self.end_headers()
+            return
+
         if parsed.path == "/api/solve":
             params = urllib.parse.parse_qs(parsed.query)
             scenario_id = params.get("scenario", ["1"])[0]
