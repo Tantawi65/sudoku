@@ -15,6 +15,10 @@ def compute_ece(probs: np.ndarray, labels: np.ndarray, n_bins: int = 10) -> floa
     probs: (N, C) predicted probabilities
     labels: (N,) true labels (0-indexed or 1-indexed)
     """
+    labels = np.asarray(labels)
+    if len(labels) > 0 and np.min(labels) >= 1 and np.max(labels) == probs.shape[1]:
+        labels = labels - 1
+
     confidences = np.max(probs, axis=1)
     predictions = np.argmax(probs, axis=1)
 

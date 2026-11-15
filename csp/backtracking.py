@@ -18,13 +18,19 @@ class BacktrackingSolver:
         self.assignments = 0
         self.backtracks = 0
 
-    def solve(self, csp: SudokuCSP, stop_at_one: bool = True) -> List[Dict[Tuple[int, int], int]]:
+    def solve(
+        self,
+        csp: SudokuCSP,
+        stop_at_one: bool = True,
+        max_solutions: Optional[int] = None
+    ) -> List[Dict[Tuple[int, int], int]]:
         """
         Runs pure backtracking search.
         Returns a list of valid complete assignments.
         """
         self.reset_counters()
         assignment: Dict[Tuple[int, int], int] = {}
+        limit = max_solutions if max_solutions is not None else (1 if stop_at_one else None)
 
         # Fixed clues are part of the initial assignment
         for var in csp.variables:
@@ -39,7 +45,7 @@ class BacktrackingSolver:
                     return []
 
         solutions: List[Dict[Tuple[int, int], int]] = []
-        self._backtrack(csp, assignment, solutions, stop_at_one)
+        self._backtrack(csp, assignment, solutions, limit)
         return solutions
 
     def _select_unassigned_variable(
@@ -58,11 +64,13 @@ class BacktrackingSolver:
         csp: SudokuCSP,
         assignment: Dict[Tuple[int, int], int],
         solutions: List[Dict[Tuple[int, int], int]],
-        stop_at_one: bool
+        limit: Optional[int]
     ) -> bool:
         if len(assignment) == len(csp.variables):
             solutions.append(dict(assignment))
-            return True
+            if limit is not None and len(solutions) >= limit:
+                return True
+            return False
 
         var = self._select_unassigned_variable(csp, assignment)
         if var is None:
@@ -74,8 +82,8 @@ class BacktrackingSolver:
                 assignment[var] = val
                 self.assignments += 1
 
-                found = self._backtrack(csp, assignment, solutions, stop_at_one)
-                if found and stop_at_one:
+                found = self._backtrack(csp, assignment, solutions, limit)
+                if limit is not None and len(solutions) >= limit:
                     return True
 
                 del assignment[var]

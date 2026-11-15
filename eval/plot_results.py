@@ -81,6 +81,8 @@ def generate_markdown_tables(results_path: str = "eval/results/experiment_result
 def generate_experiment_plots(results_path: str = "eval/results/experiment_results.json") -> None:
     """Generates charts for Experiments 1, 2, and 3 using matplotlib."""
     try:
+        import matplotlib
+        matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except ImportError:
         print("Matplotlib not installed yet. Skipping plot generation.")

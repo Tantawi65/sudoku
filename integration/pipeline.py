@@ -99,13 +99,13 @@ class SudokuPipeline:
         }
 
         # Check initial grid consistency with AC-3
-        csp_init = SudokuCSP(initial_grid)
-        is_consistent, _, _ = run_ac3(csp_init)
+        csp_check = SudokuCSP(initial_grid)
+        is_consistent, _, _ = run_ac3(csp_check)
 
-        if is_consistent and not csp_init.has_immediate_conflict():
+        if is_consistent and not csp_check.has_immediate_conflict():
             # Try direct CSP solve
             solver = UnifiedCSPSolver(mode=csp_mode)
-            solved = solver.solve(csp_init)
+            solved = solver.solve(SudokuCSP(initial_grid))
             if solved is not None:
                 result["is_initially_valid"] = True
                 result["solved_grid"] = solved

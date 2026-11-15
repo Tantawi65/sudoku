@@ -22,15 +22,19 @@ class ForwardCheckingSolver:
         self,
         csp: SudokuCSP,
         use_mrv: bool = True,
-        stop_at_one: bool = True
+        stop_at_one: bool = True,
+        max_solutions: Optional[int] = None
     ) -> List[Dict[Tuple[int, int], int]]:
         """
         Solves the CSP using Forward Checking.
         Optional use_mrv enables Minimum Remaining Values variable ordering.
+        Optional max_solutions limits the number of solutions to find before terminating.
         """
         self.reset_counters()
         assignment: Dict[Tuple[int, int], int] = {}
         domains = {var: set(csp.domains[var]) for var in csp.variables}
+
+        limit = max_solutions if max_solutions is not None else (1 if stop_at_one else None)
 
         # Check initial consistency
         for var in csp.variables:
@@ -49,7 +53,7 @@ class ForwardCheckingSolver:
                         return []
 
         solutions: List[Dict[Tuple[int, int], int]] = []
-        self._backtrack_fc(csp, assignment, domains, solutions, use_mrv, stop_at_one)
+        self._backtrack_fc(csp, assignment, domains, solutions, use_mrv, limit)
         return solutions
 
     def _select_unassigned_variable(
@@ -74,11 +78,13 @@ class ForwardCheckingSolver:
         domains: Dict[Tuple[int, int], Set[int]],
         solutions: List[Dict[Tuple[int, int], int]],
         use_mrv: bool,
-        stop_at_one: bool
+        limit: Optional[int]
     ) -> bool:
         if len(assignment) == len(csp.variables):
             solutions.append(dict(assignment))
-            return True
+            if limit is not None and len(solutions) >= limit:
+                return True
+            return False
 
         var = self._select_unassigned_variable(csp, assignment, domains, use_mrv)
         if var is None:
@@ -101,8 +107,8 @@ class ForwardCheckingSolver:
                 assignment[var] = val
                 self.assignments += 1
 
-                found = self._backtrack_fc(csp, assignment, domains, solutions, use_mrv, stop_at_one)
-                if found and stop_at_one:
+                found = self._backtrack_fc(csp, assignment, domains, solutions, use_mrv, limit)
+                if limit is not None and len(solutions) >= limit:
                     return True
 
                 del assignment[var]

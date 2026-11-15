@@ -72,5 +72,5 @@ class UnifiedCSPSolver:
         """Counts up to max_count solutions to verify puzzle uniqueness."""
         working_csp = csp.copy()
         fc_solver = ForwardCheckingSolver()
-        solutions = fc_solver.solve(working_csp, use_mrv=True, stop_at_one=False)
+        solutions = fc_solver.solve(working_csp, use_mrv=True, max_solutions=max_count)
         return len(solutions)
