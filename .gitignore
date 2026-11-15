@@ -1,0 +1,16 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data & Model weights cache
+data/raw/
+data/processed/*.npz
+nn/weights/*.joblib
+nn/weights/*.pth
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
