@@ -832,7 +832,7 @@
         const val = gridData[r][c];
         // reset classes (keep border ones)
         el.className = "cell" + (c===2||c===5?" br":"") + (r===2||r===5?" bb":"");
-        if (val === 0) { el.textContent = "·"; return; }
+        if (val === 0) { el.textContent = "·"; continue; }
         el.textContent = val;
         if (conflicts.some(([cr,cc]) => cr===r && cc===c)) {
           el.classList.add("c-conflict");
