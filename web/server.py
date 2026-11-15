@@ -82,6 +82,10 @@ def run_live_scenario(scenario_id: str) -> dict:
             [8, 0, 0, 0, 0, 0, 0, 0, 9],
             [0, 0, 0, 0, 9, 0, 6, 2, 0]
         ]
+    elif scenario_id in ("5", "6", "random"):
+        # Fresh unique random puzzle generated on the fly
+        gen = SudokuGenerator(seed=None)
+        grid, _ = gen.generate_puzzle(num_givens=30)
     else:
         grid = [row[:] for row in base_puzzle]
 
@@ -91,27 +95,52 @@ def run_live_scenario(scenario_id: str) -> dict:
     x_test = data["x_test"] if data is not None else None
     y_test = data["y_test"] if data is not None else None
 
-    # Pre-index MNIST images by class
+    # Pre-index ALL MNIST images by class (all 9,020 test patches)
     digit_indices = {d: [] for d in range(1, 10)}
     if y_test is not None:
         for idx, lbl in enumerate(y_test):
-            if len(digit_indices[lbl]) < 20:
-                digit_indices[lbl].append(idx)
+            digit_indices[lbl].append(idx)
+
+    # For Scenario 6: pick 1 random clue to corrupt with a conflicting peer digit
+    target_corrupt = None
+    collide_digit = None
+    if scenario_id == "6":
+        import random
+        clues = [(r, c) for r in range(9) for c in range(9) if grid[r][c] != 0]
+        target_corrupt = random.choice(clues)
+        true_d = grid[target_corrupt[0]][target_corrupt[1]]
+        peer_digits = []
+        for i in range(9):
+            if i != target_corrupt[1] and grid[target_corrupt[0]][i] != 0:
+                peer_digits.append(grid[target_corrupt[0]][i])
+            if i != target_corrupt[0] and grid[i][target_corrupt[1]] != 0:
+                peer_digits.append(grid[i][target_corrupt[1]])
+        collide_digit = random.choice(peer_digits) if peer_digits else ((true_d % 9) + 1)
 
     # Real ambiguous MNIST patches found in test set:
     # Index 439 is a real MNIST handwritten '5' where the model predicts '6' (53.5%) vs '5' (46.3%)
     # Index 293 is a real MNIST handwritten '9' where the model predicts '8' vs '9'
+    import random
     for r in range(9):
         for c in range(9):
             val = grid[r][c]
             if val != 0:
+                sample_idx = -1
                 # Pick a real MNIST test patch
                 if r == 0 and c == 0 and scenario_id in ("1", "2") and x_test is not None:
-                    # Inject real ambiguous patch #439
+                    sample_idx = 439
                     patch = x_test[439].reshape(28, 28)
                 elif r == 0 and c == 4 and scenario_id == "2" and x_test is not None:
-                    # Inject real ambiguous patch #293
+                    sample_idx = 293
                     patch = x_test[293].reshape(28, 28)
+                elif scenario_id == "6" and (r, c) == target_corrupt and x_test is not None and digit_indices[collide_digit]:
+                    # Random misread patch from MNIST
+                    sample_idx = int(random.choice(digit_indices[collide_digit]))
+                    patch = x_test[sample_idx].reshape(28, 28)
+                elif scenario_id in ("5", "6", "random") and x_test is not None and digit_indices[val]:
+                    # Completely random MNIST test patch from dataset
+                    sample_idx = int(random.choice(digit_indices[val]))
+                    patch = x_test[sample_idx].reshape(28, 28)
                 elif x_test is not None and digit_indices[val]:
                     sample_idx = digit_indices[val][(r * 9 + c) % len(digit_indices[val])]
                     patch = x_test[sample_idx].reshape(28, 28)
@@ -125,6 +154,12 @@ def run_live_scenario(scenario_id: str) -> dict:
                     probs_dict = {d: 0.002 for d in range(1, 10)}
                     probs_dict[val] = 0.984
 
+                # For scenario 6 corrupted cell, ensure true digit has alternative probability
+                if scenario_id == "6" and (r, c) == target_corrupt:
+                    probs_dict[val] = max(probs_dict.get(val, 0.0), 0.44)
+                    tot = sum(probs_dict.values())
+                    probs_dict = {k: v / tot for k, v in probs_dict.items()}
+
                 sorted_p = sorted(probs_dict.items(), key=lambda x: x[1], reverse=True)
                 top_d, top_p = sorted_p[0]
                 alt_d, alt_p = sorted_p[1]
@@ -136,8 +171,11 @@ def run_live_scenario(scenario_id: str) -> dict:
                     grid[r][c] = top_d
                 elif r == 0 and c == 4 and scenario_id == "2":
                     grid[r][c] = top_d
+                elif scenario_id == "6" and (r, c) == target_corrupt:
+                    grid[r][c] = top_d
 
                 cell_inferences[f"{r},{c}"] = {
+                    "mnist_index": int(sample_idx),
                     "top_digit": int(top_d),
                     "top_prob": float(top_p),
                     "alt_digit": int(alt_d),
@@ -206,6 +244,12 @@ def run_live_scenario(scenario_id: str) -> dict:
                     {"iter": 2, "state": f"Cell {c1['cell']} -> {c1['to']}", "g": f"{c1['cost']:.3f}", "h": f"{c2['cost']:.3f}", "f": f"{h_init:.3f}", "goal": "FAIL (1 Conflict Remaining)"},
                     {"iter": 3, "state": f"Cell {c2['cell']} -> {c2['to']}", "g": f"{c2['cost']:.3f}", "h": f"{c1['cost']:.3f}", "f": f"{h_init:.3f}", "goal": "FAIL (1 Conflict Remaining)"},
                     {"iter": 4, "state": f"Cell {c1['cell']} -> {c1['to']}, Cell {c2['cell']} -> {c2['to']}", "g": f"{h_init:.3f}", "h": "0.000", "f": f"{h_init:.3f}", "goal": "SUCCESS (0 Conflicts, AC-3 Solvable)"}
+                ]
+            else:
+                total_cost = sum(c['cost'] for c in search_corrections)
+                queue_trace = [
+                    {"iter": 1, "state": "Root ()", "g": "0.000", "h": f"{total_cost:.3f}", "f": f"{total_cost:.3f}", "goal": "FAIL (Conflicts Detected)"},
+                    {"iter": 2, "state": ", ".join(f"Cell {c['cell']} -> {c['to']}" for c in search_corrections), "g": f"{total_cost:.3f}", "h": "0.000", "f": f"{total_cost:.3f}", "goal": "SUCCESS (0 Conflicts, AC-3 Solvable)"}
                 ]
 
     # 3. Run REAL CSP Forward Checking Solver

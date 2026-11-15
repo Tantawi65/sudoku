@@ -520,13 +520,16 @@
       <div class="controls" style="margin-bottom:.6rem;">
         <label>Scenario:</label>
         <select id="scenario-sel" onchange="loadScenario(this.value)">
-          <option value="1">Scenario 1 &mdash; One misread clue at cell (0,0)</option>
-          <option value="2">Scenario 2 &mdash; Two misread clues at (0,0) and (0,4)</option>
-          <option value="3">Scenario 3 &mdash; Perfect reading, no misreads</option>
+          <option value="1">Scenario 1 &mdash; Ambiguous clue at cell (0,0) [Patch #439]</option>
+          <option value="2">Scenario 2 &mdash; Two ambiguous clues at (0,0) and (0,4)</option>
+          <option value="3">Scenario 3 &mdash; Base board, clean MNIST reading (Direct solve)</option>
           <option value="4">Scenario 4 &mdash; Sparse 25-clue benchmark puzzle</option>
+          <option value="5">Scenario 5 &mdash; 🎲 Random board &amp; random MNIST test patches (Clean)</option>
+          <option value="6">Scenario 6 &mdash; 🎲 Random board with random misread (Live A* solve)</option>
         </select>
         <button class="btn btn-step"  onclick="advanceStep()">Next Step &rarr;</button>
         <button class="btn btn-run"   onclick="runAll()">Run All</button>
+        <button class="btn btn-step"  style="background:#5a3a7e;border-color:#5a3a7e;color:#fff;" onclick="loadRandomBoard()" title="Generate a brand-new random puzzle with random handwritten test images">🎲 Randomize</button>
         <button class="btn btn-reset" onclick="resetScenario()">Reset</button>
       </div>
       <div class="metrics">
@@ -903,7 +906,8 @@
         altProb:     v.alt_prob,
         margin:      v.margin,
         isAmbiguous: v.is_ambiguous,
-        allProbs:    v.all_probs
+        allProbs:    v.all_probs,
+        mnistIndex:  v.mnist_index
       };
     }
 
@@ -962,8 +966,11 @@
     entries.forEach(([k, inf]) => {
       const tr = document.createElement("tr");
       const isAmb = inf.margin < 0.20;
+      const patchHtml = (inf.mnistIndex !== undefined && inf.mnistIndex >= 0)
+        ? ` <span style="font-size:.73rem;color:var(--muted);font-family:monospace;">#${inf.mnistIndex}</span>`
+        : "";
       tr.innerHTML = `
-        <td class="mono">(${k.replace(",",", ")})</td>
+        <td class="mono">(${k.replace(",",", ")})${patchHtml}</td>
         <td style="font-weight:700;color:var(--step1);">${inf.topDigit}</td>
         <td class="mono">${(inf.topProb*100).toFixed(2)}%</td>
         <td style="color:var(--step3);">${inf.altDigit}</td>
@@ -973,6 +980,14 @@
       `;
       tb.appendChild(tr);
     });
+  }
+
+  function loadRandomBoard() {
+    // Alternate between scenario 5 (clean random) and scenario 6 (random with misread)
+    const sel = document.getElementById("scenario-sel");
+    const nextVal = (sel.value === "5") ? "6" : "5";
+    sel.value = nextVal;
+    loadScenario(nextVal);
   }
 
   function clearS3Queue() {
@@ -1329,6 +1344,11 @@
       html += `<p class="small">This cell is empty &mdash; no neural network inference was run on it.
       Its value will be determined purely by the CSP solver using domain constraints.</p>`;
     } else {
+      if (inf.mnistIndex !== undefined && inf.mnistIndex >= 0) {
+        html += `<div class="small" style="background:#eaf2eb;color:var(--step1);padding:.35rem .6rem;border-radius:4px;margin-bottom:.6rem;font-weight:600;">
+          📷 Real MNIST Test Patch: #${inf.mnistIndex} (drawn from test set: data/processed/mnist_filtered.npz)
+        </div>`;
+      }
       html += `<div class="output-title" style="margin-bottom:.4rem;">Calibrated softmax P(digit | image) for all 9 classes:</div>`;
       for (let d = 1; d <= 9; d++) {
         const p   = inf.allProbs[d] || 0;
