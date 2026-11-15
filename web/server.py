@@ -13,6 +13,12 @@ from http.server import SimpleHTTPRequestHandler, HTTPServer
 import webbrowser
 import numpy as np
 
+# Ensure project root directory is in sys.path before importing project modules
+WEB_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.dirname(WEB_DIR)
+if PROJECT_DIR not in sys.path:
+    sys.path.insert(0, PROJECT_DIR)
+
 # Import actual project modules
 from csp.sudoku_csp import SudokuCSP
 from csp.ac3 import run_ac3
@@ -25,8 +31,6 @@ from nn.classifier import SudokuDigitClassifier
 from data.generator import SudokuGenerator
 
 PORT = 8000
-WEB_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_DIR = os.path.dirname(WEB_DIR)
 
 # Global model instance
 classifier = None
@@ -278,7 +282,7 @@ def run_server(port: int = PORT):
     # Pre-load classifier
     print("Loading Neural Network weights and MNIST test dataset...", flush=True)
     get_classifier()
-    print("  ✔ Model and test data loaded successfully into memory.", flush=True)
+    print("  [OK] Model and test data loaded successfully into memory.", flush=True)
 
     server_address = ("", port)
     httpd = HTTPServer(server_address, CustomHandler)
