@@ -4,7 +4,7 @@
     "ece_uncalibrated": 0.00885270472178178,
     "ece_calibrated": 0.00885270472178178,
     "optimal_temperature": 1.0,
-    "training_time_seconds": 27.8174421,
+    "training_time_seconds": 28.444342199999998,
     "confusion_matrix": [
       [
         1129,
@@ -110,7 +110,7 @@
   "baseline_logistic_regression": {
     "accuracy": 0.9218403547671841,
     "ece": 0.0040348690341534335,
-    "training_time_seconds": 18.472663,
+    "training_time_seconds": 21.698976199999997,
     "confusion_matrix": [
       [
         1114,

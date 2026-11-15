@@ -511,10 +511,11 @@
       <p>Coupled Neural Inference + AC-3 Constraint Propagation + A* Heuristic Search</p>
     </div>
     <div class="header-badges">
+      <span id="connection-badge" class="badge" style="color: var(--accent-green); border-color: var(--accent-green);">Engine: Connecting...</span>
       <span class="badge">Dataset: MNIST (1–9)</span>
-      <span class="badge">Model: 2-Block Calibrated CNN</span>
+      <span class="badge">Model: Calibrated NN</span>
       <span class="badge">Test Acc: 97.97%</span>
-      <span class="badge">Optimal Temp T = 1.000</span>
+      <span class="badge">T = 1.000 (ECE = 0.0089)</span>
     </div>
   </header>
 
@@ -586,6 +587,7 @@
         <button class="btn-outline" id="tab-btn-nn" onclick="switchTab('nn')">Full Model Predictions & Confidence Table</button>
         <button class="btn-outline" id="tab-btn-search" onclick="switchTab('search')">A* Priority Queue Log</button>
         <button class="btn-outline" id="tab-btn-csp" onclick="switchTab('csp')">CSP Pruning Comparison</button>
+        <button class="btn-outline" id="tab-btn-api" onclick="switchTab('api')">Live Python API Payload</button>
       </div>
 
       <!-- Tab View 1: Execution Trace -->
@@ -697,6 +699,14 @@ Pure Backtracking is blind to unassigned variable domain exhaustion; it assigns 
 Forward Checking (FC) looks forward: each assignment immediately eliminates incompatible values from all 20 peer domains. If any peer domain becomes empty ($\emptyset$), the branch is terminated immediately. This cuts backtracks by over 98% across all benchmark puzzle instances.
           </div>
         </div>
+
+        <!-- Tab View 5: Live API Payload -->
+        <div class="tab-view" id="view-api">
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+            Raw JSON response payload streamed live from the Python backend (<code>http://localhost:8000/api/solve?scenario=...</code>) executing real neural network inference, AC-3 consistency propagation, and A* state-space search:
+          </p>
+          <pre id="api-json-pre" style="background: #080c14; border: 1px solid var(--card-border); border-radius: 8px; padding: 1rem; font-size: 0.75rem; color: #38bdf8; overflow-x: auto; max-height: 440px; white-space: pre-wrap; word-break: break-all; font-family: 'Consolas', 'Fira Code', monospace; line-height: 1.4;"></pre>
+        </div>
       </div>
     </div>
   </main>
@@ -787,12 +797,15 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
       return probs;
     }
 
-    function loadScenario(scenarioId) {
+    let liveBackendData = null;
+
+    async function loadScenario(scenarioId) {
       currentScenario = scenarioId;
       currentStep = 0;
       conflicts = [];
       corrections = [];
       cellInferences = {};
+      liveBackendData = null;
 
       document.getElementById("metric-stage").innerText = "0 / 4";
       document.getElementById("metric-nodes").innerText = "0";
@@ -801,15 +814,89 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
       document.getElementById("board-status-badge").innerText = "Step 0/4: Ready";
       document.getElementById("board-status-badge").style.color = "var(--text-muted)";
 
+      const connBadge = document.getElementById("connection-badge");
+      if (connBadge) {
+        connBadge.innerText = "Engine: Querying API...";
+        connBadge.style.color = "var(--primary)";
+        connBadge.style.borderColor = "var(--primary)";
+      }
+
+      try {
+        const resp = await fetch(`/api/solve?scenario=${scenarioId}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          liveBackendData = data;
+          applyLiveData(data);
+          return;
+        }
+      } catch (err) {
+        // Server not reachable or opened as local file
+      }
+
+      applyFallbackData(scenarioId);
+    }
+
+    function applyLiveData(data) {
+      const connBadge = document.getElementById("connection-badge");
+      if (connBadge) {
+        connBadge.innerHTML = "🟢 Engine: Live Python Server (Port 8000)";
+        connBadge.style.color = "var(--accent-green)";
+        connBadge.style.borderColor = "var(--accent-green)";
+      }
+
+      gridData = data.initial_grid.map(row => [...row]);
+      initialGivens = data.initial_grid.map(row => [...row]);
+
+      cellInferences = {};
+      for (const [k, v] of Object.entries(data.cell_inferences)) {
+        cellInferences[k] = {
+          topDigit: v.top_digit,
+          topProb: v.top_prob,
+          altDigit: v.alt_digit,
+          altProb: v.alt_prob,
+          margin: v.margin,
+          isAmbiguous: v.is_ambiguous,
+          allProbs: v.all_probs
+        };
+      }
+
+      const apiPre = document.getElementById("api-json-pre");
+      if (apiPre) {
+        apiPre.innerText = JSON.stringify(data, null, 2);
+      }
+
+      populateNNTable();
+      clearSearchLog();
+      renderBoard();
+
+      document.getElementById("step-trace-content").innerHTML = 
+        `<div class="tech-block">` +
+        `<strong>[LIVE BACKEND CONNECTED]: Scenario ${data.scenario_id} loaded directly from Python API.</strong>\n` +
+        `• Architecture:       ${data.model_type}\n` +
+        `• Test Accuracy:      ${(data.test_accuracy * 100).toFixed(2)}% on MNIST (Digits 1–9)\n` +
+        `• Initial Givens:     ${countClues()} clues detected | ${81 - countClues()} empty variables\n` +
+        `• Computational Mode: 100% Real Neural Inference, AC-3 Constraint Propagation & A* Search\n` +
+        `----------------------------------------------------------------------------------------\n` +
+        `Click "Next Step ▶" to walk through the mathematical pipeline, or view the "Live Python API Payload" tab.` +
+        `</div>`;
+    }
+
+    function applyFallbackData(scenarioId) {
+      const connBadge = document.getElementById("connection-badge");
+      if (connBadge) {
+        connBadge.innerHTML = "🟡 Engine: Client Offline Cache";
+        connBadge.style.color = "var(--accent-amber)";
+        connBadge.style.borderColor = "var(--accent-amber)";
+      }
+
       gridData = BASE_PUZZLE.map(row => [...row]);
 
       if (scenarioId === "1") {
-        gridData[0][0] = 6; // Misread: true is 5. Collides with (1,0)=6 in col 0 and box 0
+        gridData[0][0] = 6;
       } else if (scenarioId === "2") {
-        gridData[0][0] = 6; // True 5
-        gridData[0][4] = 9; // True 7 (collides with (1,4)=9 in col 4)
+        gridData[0][0] = 6;
+        gridData[0][4] = 9;
       } else if (scenarioId === "4") {
-        // 25-clue benchmark
         gridData = [
           [0, 0, 0, 3, 4, 0, 0, 0, 1],
           [0, 8, 0, 6, 0, 0, 0, 3, 0],
@@ -825,7 +912,6 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
 
       initialGivens = gridData.map(row => [...row]);
 
-      // Populate full NN probability distributions
       for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
           const val = gridData[r][c];
@@ -856,15 +942,20 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
         }
       }
 
+      const apiPre = document.getElementById("api-json-pre");
+      if (apiPre) {
+        apiPre.innerText = "// Offline Mode: Python server not currently detected on port 8000.\n// To enable live neural network execution and search tracing, run in your terminal:\n//   python web/server.py\n// Currently displaying pre-computed verified dataset.";
+      }
+
       populateNNTable();
       clearSearchLog();
       renderBoard();
 
       document.getElementById("step-trace-content").innerHTML = 
         `<div class="tech-block">` +
-        `<strong>[STATUS]: Scenario ${scenarioId} successfully loaded.</strong>\n` +
+        `<strong>[STATUS]: Scenario ${scenarioId} loaded from embedded offline cache.</strong>\n` +
         `Initial givens detected: ${countClues()} clues. Empty variables: ${81 - countClues()} cells.\n` +
-        `Click "Next Step ▶" to begin stage execution, or inspect the tabs above for full NN distributions and search logs.` +
+        `To connect to the live Python model server, execute: <code>python web/server.py</code> and refresh this page.` +
         `</div>`;
     }
 
@@ -954,6 +1045,10 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
 
       let ambiguousList = Object.entries(cellInferences).filter(([_, inf]) => inf.isAmbiguous);
 
+      const modelName = liveBackendData ? liveBackendData.model_type : "Deep Multi-Layer Perceptron (784 -> 256 -> 128 -> 9)";
+      const testAcc = liveBackendData ? (liveBackendData.test_accuracy * 100).toFixed(2) : "97.97";
+      const sourceInfo = liveBackendData ? "Real Inference on MNIST Test Patches (Joblib Model Weights)" : "Pre-computed Calibrated Distributions";
+
       let text = 
         `<div class="tech-block">` +
         `<strong class="highlight-blue">STAGE 1: NEURAL NETWORK INFERENCE & PROBABILITY CALIBRATION</strong>\n` +
@@ -961,7 +1056,9 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
         `• Image Input Processing:   81 single-channel 28x28 grayscale image patches.\n` +
         `• Blank Patch Detection:    Pixel mean brightness evaluated against threshold θ = 0.05.\n` +
         `                            -> ${81 - countClues()} blank cells detected and mapped to 0 (bypassing NN inference).\n` +
-        `• Classification Model:     2-Block CNN (Conv2D -> BatchNorm -> ReLU -> MaxPool -> FC -> Softmax).\n` +
+        `• Classification Model:     ${modelName}.\n` +
+        `• Inference Source:         ${sourceInfo}.\n` +
+        `• MNIST Test Accuracy:      ${testAcc}% on digits 1–9.\n` +
         `• Temperature Scaling:      Logits calibrated using optimal validation temperature T = 1.000 (ECE = 0.0089).\n` +
         `• Total Clues Classified:   ${countClues()} clue cells.\n` +
         `----------------------------------------------------------------------------------------\n` +
@@ -975,12 +1072,12 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
             `<strong class="highlight-amber">Confidence Margin Δ = +${(inf.margin*100).toFixed(1)}% [HIGH UNCERTAINTY]</strong>\n`;
         });
         text += 
-          `\n• Analytical Conclusion: The classifier has assigned a narrow margin (Δ < 15%) to ${ambiguousList.length} clue(s).\n` +
+          `\n• Analytical Conclusion: The classifier has assigned a narrow margin (Δ < 20%) to ${ambiguousList.length} clue(s).\n` +
           `  These cells represent high-risk candidates for misread substitution during downstream search.\n` +
-          `  Switch to the "Full Model Predictions" tab above to view the full 81-clue breakdown.`;
+          `  Switch to the "Full Model Predictions" tab above to view the full probability distribution for all clues.`;
       } else {
         text += 
-          `  All ${countClues()} clues exhibit wide confidence margins (Δ > 90%). Probability distribution is unimodal.`;
+          `  All ${countClues()} clues exhibit wide confidence margins (Δ > 80%). Predictions are highly decisive.`;
       }
 
       text += `</div>`;
@@ -996,21 +1093,38 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
       conflicts = [];
       let conflictDetails = [];
 
-      if (currentScenario === "1") {
-        conflicts = [[0, 0], [1, 0]];
-        conflictDetails.push({
-          c1: "(0, 0)", v1: 6,
-          c2: "(1, 0)", v2: 6,
-          unit: "Column 0 and 3x3 Box 0",
-          rule: "Alldifferent(Col 0)"
+      if (liveBackendData && liveBackendData.ac3) {
+        const liveConflicts = liveBackendData.ac3.conflicts;
+        liveConflicts.forEach(c => {
+          conflicts.push(c.cell1);
+          conflicts.push(c.cell2);
+          conflictDetails.push({
+            c1: `(${c.cell1[0]}, ${c.cell1[1]})`, v1: c.digit,
+            c2: `(${c.cell2[0]}, ${c.cell2[1]})`, v2: c.digit,
+            unit: "Shared Peer Scope (Row/Column/Box)",
+            rule: `Alldifferent peer constraint violated`
+          });
         });
-      } else if (currentScenario === "2") {
-        conflicts = [[0, 0], [1, 0], [0, 4], [1, 4]];
-        conflictDetails.push({ c1: "(0, 0)", v1: 6, c2: "(1, 0)", v2: 6, unit: "Col 0 / Box 0", rule: "Alldifferent(Col 0)" });
-        conflictDetails.push({ c1: "(0, 4)", v1: 9, c2: "(1, 4)", v2: 9, unit: "Col 4", rule: "Alldifferent(Col 4)" });
+      } else {
+        if (currentScenario === "1") {
+          conflicts = [[0, 0], [1, 0]];
+          conflictDetails.push({
+            c1: "(0, 0)", v1: 6,
+            c2: "(1, 0)", v2: 6,
+            unit: "Column 0 and 3x3 Box 0",
+            rule: "Alldifferent(Col 0)"
+          });
+        } else if (currentScenario === "2") {
+          conflicts = [[0, 0], [1, 0], [0, 4], [8, 4]];
+          conflictDetails.push({ c1: "(0, 0)", v1: 6, c2: "(1, 0)", v2: 6, unit: "Col 0 / Box 0", rule: "Alldifferent(Col 0)" });
+          conflictDetails.push({ c1: "(0, 4)", v1: 8, c2: "(8, 4)", v2: 8, unit: "Col 4", rule: "Alldifferent(Col 4)" });
+        }
       }
 
       renderBoard();
+
+      const arcsTested = liveBackendData ? liveBackendData.ac3.arcs_tested : 810;
+      const valuesPruned = liveBackendData ? liveBackendData.ac3.values_pruned : (conflicts.length > 0 ? 1 : 0);
 
       let text = 
         `<div class="tech-block">` +
@@ -1019,6 +1133,8 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
         `• Constraint Network:       81 Variables, binary inequality constraints: X_i ≠ X_j ∀ (X_i, X_j) ∈ Peers.\n` +
         `• Arc Queue Initialization: 810 directed constraint arcs added to revision queue Q.\n` +
         `• Propagation Engine:       Arc Consistency Algorithm #3 (AC-3).\n` +
+        `• Arcs Evaluated:           ${arcsTested} directed arcs processed.\n` +
+        `• Domain Values Pruned:     ${valuesPruned} values eliminated from variable domains.\n` +
         `----------------------------------------------------------------------------------------\n` +
         `ARC REVISION EXECUTION TRACE:\n`;
 
@@ -1026,8 +1142,8 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
         conflictDetails.forEach(cd => {
           text += 
             `  [DOMAIN COLLAPSE]: Evaluating directed arc (${cd.c1} -> ${cd.c2})...\n` +
-            `    -> Both fixed givens share value ${cd.v1} within shared scope ${cd.unit}.\n` +
-            `    -> Constraint ${cd.rule} violated: No value in D(${cd.c2}) satisfies ${cd.v1} ≠ ${cd.v2}.\n` +
+            `    -> Both fixed givens share value ${cd.v1} within ${cd.unit}.\n` +
+            `    -> Constraint violated: No value in D(${cd.c2}) satisfies ${cd.v1} ≠ ${cd.v2}.\n` +
             `    -> Domain wipeout detected: <strong class="highlight-red">D(${cd.c1}) = ∅ (Empty Domain)</strong>.\n`;
         });
 
@@ -1038,7 +1154,7 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
           `  State-Space Correction Search (A*) invoked to explore minimal-penalty digit substitutions.`;
       } else {
         text += 
-          `  • All 810 directed arcs verified consistent.\n` +
+          `  • All directed arcs verified consistent.\n` +
           `  • Domain sizes: |D(X_i)| = 1 for clues, |D(X_i)| ∈ [1..9] for empty variables.\n` +
           `  • Result: No domain collapses detected. Puzzle is mathematically satisfiable without corrections.`;
       }
@@ -1060,29 +1176,39 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
       let nodes = 0;
       let time = 0;
 
-      if (currentScenario === "1") {
-        gridData[0][0] = 5;
-        corrections = [[0, 0]];
-        nodes = 2;
-        time = 31.85;
+      if (liveBackendData && liveBackendData.search) {
+        const liveSearch = liveBackendData.search;
+        nodes = liveSearch.nodes_expanded;
+        time = liveSearch.elapsed_time_ms;
+        searchLog = liveSearch.queue_trace || [];
 
-        searchLog = [
-          { iter: 1, state: "Root ()", g: "0.000", h: "0.076", f: "0.076", goal: "FAIL (Col 0 Conflict)" },
-          { iter: 2, state: "Cell (0, 0) -> 5", g: "0.076", h: "0.000", f: "0.076", goal: "SUCCESS (0 Conflicts, AC-3 Valid)" }
-        ];
-      } else if (currentScenario === "2") {
-        gridData[0][0] = 5;
-        gridData[0][4] = 7;
-        corrections = [[0, 0], [0, 4]];
-        nodes = 4;
-        time = 28.48;
-
-        searchLog = [
-          { iter: 1, state: "Root ()", g: "0.000", h: "0.200", f: "0.200", goal: "FAIL (Col 0 & Col 4 Conflicts)" },
-          { iter: 2, state: "Cell (0, 0) -> 5", g: "0.076", h: "0.124", f: "0.200", goal: "FAIL (Col 4 Conflict Remaining)" },
-          { iter: 3, state: "Cell (0, 4) -> 7", g: "0.124", h: "0.076", f: "0.200", goal: "FAIL (Col 0 Conflict Remaining)" },
-          { iter: 4, state: "Cell (0, 0) -> 5, Cell (0, 4) -> 7", g: "0.200", h: "0.000", f: "0.200", goal: "SUCCESS (0 Conflicts, AC-3 Valid)" }
-        ];
+        liveSearch.corrections.forEach(c => {
+          gridData[c.cell[0]][c.cell[1]] = c.to;
+          corrections.push(c.cell);
+        });
+      } else {
+        if (currentScenario === "1") {
+          gridData[0][0] = 5;
+          corrections = [[0, 0]];
+          nodes = 2;
+          time = 28.7;
+          searchLog = [
+            { iter: 1, state: "Root ()", g: "0.000", h: "0.071", f: "0.071", goal: "FAIL (Col 0 Conflict)" },
+            { iter: 2, state: "Cell (0, 0) -> 5", g: "0.071", h: "0.000", f: "0.071", goal: "SUCCESS (0 Conflicts, AC-3 Solvable)" }
+          ];
+        } else if (currentScenario === "2") {
+          gridData[0][0] = 5;
+          gridData[0][4] = 7;
+          corrections = [[0, 0], [0, 4]];
+          nodes = 4;
+          time = 28.5;
+          searchLog = [
+            { iter: 1, state: "Root ()", g: "0.000", h: "0.442", f: "0.442", goal: "FAIL (Col 0 & Col 4 Conflicts)" },
+            { iter: 2, state: "Cell (0, 0) -> 5", g: "0.071", h: "0.371", f: "0.442", goal: "FAIL (Col 4 Conflict Remaining)" },
+            { iter: 3, state: "Cell (0, 4) -> 7", g: "0.371", h: "0.071", f: "0.442", goal: "FAIL (Col 0 Conflict Remaining)" },
+            { iter: 4, state: "Cell (0, 0) -> 5, Cell (0, 4) -> 7", g: "0.442", h: "0.000", f: "0.442", goal: "SUCCESS (0 Conflicts, AC-3 Solvable)" }
+          ];
+        }
       }
 
       document.getElementById("metric-nodes").innerText = nodes;
@@ -1107,7 +1233,9 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
 
       if (corrections.length > 0) {
         corrections.forEach(([r, c]) => {
-          text += `• <strong class="highlight-green">[OPTIMAL SUBSTITUTION FOUND]</strong>: Cell (${r}, ${c}) changed -> ${gridData[r][c]} (Cost Δ = 0.076)\n`;
+          const inf = cellInferences[`${r},${c}`];
+          const cost = inf ? (inf.topProb - (inf.allProbs ? inf.allProbs[gridData[r][c]] : 0.0)).toFixed(3) : "0.071";
+          text += `• <strong class="highlight-green">[OPTIMAL SUBSTITUTION FOUND]</strong>: Cell (${r}, ${c}) changed -> ${gridData[r][c]} (Cost Δ = ${cost})\n`;
         });
         text += 
           `\n• Mathematical Admissibility Proof:\n` +
@@ -1128,24 +1256,30 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
       document.getElementById("board-status-badge").innerText = "Stage 4: CSP Variable Assignment Complete";
       document.getElementById("board-status-badge").style.color = "var(--accent-green)";
 
-      if (currentScenario === "4") {
-        gridData = [
-          [9, 2, 7, 3, 4, 5, 8, 6, 1],
-          [4, 8, 1, 6, 7, 2, 9, 3, 5],
-          [3, 6, 5, 9, 1, 8, 2, 4, 7],
-          [7, 5, 8, 4, 6, 9, 3, 1, 2],
-          [6, 9, 3, 2, 5, 1, 7, 8, 4],
-          [1, 4, 2, 8, 3, 7, 5, 6, 9],
-          [2, 7, 9, 1, 8, 6, 4, 5, 3],
-          [8, 3, 6, 5, 2, 4, 1, 7, 9],
-          [5, 1, 4, 7, 9, 3, 6, 2, 8]
-        ];
-        document.getElementById("metric-backtracks").innerText = "43";
-        document.getElementById("metric-time").innerText = "3.5 ms";
+      if (liveBackendData && liveBackendData.csp && liveBackendData.csp.solved_grid) {
+        gridData = liveBackendData.csp.solved_grid.map(row => [...row]);
+        document.getElementById("metric-backtracks").innerText = liveBackendData.csp.backtracks;
+        document.getElementById("metric-time").innerText = `${liveBackendData.csp.elapsed_time_ms.toFixed(1)} ms`;
       } else {
-        gridData = COMPLETE_SOLUTION.map(r => [...r]);
-        document.getElementById("metric-backtracks").innerText = "0";
-        document.getElementById("metric-time").innerText = "1.8 ms";
+        if (currentScenario === "4") {
+          gridData = [
+            [9, 2, 7, 3, 4, 5, 8, 6, 1],
+            [4, 8, 1, 6, 7, 2, 9, 3, 5],
+            [3, 6, 5, 9, 1, 8, 2, 4, 7],
+            [7, 5, 8, 4, 6, 9, 3, 1, 2],
+            [6, 9, 3, 2, 5, 1, 7, 8, 4],
+            [1, 4, 2, 8, 3, 7, 5, 6, 9],
+            [2, 7, 9, 1, 8, 6, 4, 5, 3],
+            [8, 3, 6, 5, 2, 4, 1, 7, 9],
+            [5, 1, 4, 7, 9, 3, 6, 2, 8]
+          ];
+          document.getElementById("metric-backtracks").innerText = "43";
+          document.getElementById("metric-time").innerText = "3.5 ms";
+        } else {
+          gridData = COMPLETE_SOLUTION.map(r => [...r]);
+          document.getElementById("metric-backtracks").innerText = "0";
+          document.getElementById("metric-time").innerText = "1.8 ms";
+        }
       }
 
       renderBoard();
@@ -1155,7 +1289,7 @@ Forward Checking (FC) looks forward: each assignment immediately eliminates inco
         `<strong class="highlight-green">STAGE 4: CSP FORWARD CHECKING SOLUTION OF REMAINING VARIABLES</strong>\n` +
         `========================================================================================\n` +
         `• Solver Strategy:          Backtracking with Forward Checking (FC) & MRV Variable Ordering.\n` +
-        `• Variables Assigned:       51 empty cells.\n` +
+        `• Variables Assigned:       ${81 - countClues()} empty cells.\n` +
         `• Total Backtracks:         ${document.getElementById("metric-backtracks").innerText}\n` +
         `• Solving Time:             ${document.getElementById("metric-time").innerText}\n` +
         `----------------------------------------------------------------------------------------\n` +
