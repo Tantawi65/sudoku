@@ -957,6 +957,10 @@
     setPill("", "Waiting");
     setBadge("s1","pending","Not run"); setBadge("s2","pending","Not run");
     setBadge("s3","pending","Not run"); setBadge("s4","pending","Not run");
+    ["s1", "s2", "s3", "s4"].forEach(s => {
+      const b = document.getElementById("body-" + s);
+      if (b) b.classList.remove("open");
+    });
 
     const chip = document.getElementById("conn-chip");
     chip.textContent = "Engine: querying…";
@@ -1125,13 +1129,18 @@
 
   async function onScenarioChange(val) {
     await loadScenario(val);
-    runAll();
   }
 
   async function onConfigChange() {
     const sc = document.getElementById("scenario-sel").value;
+    const targetStep = currentStep;
     await loadScenario(sc);
-    runAll();
+    for (let s = 1; s <= targetStep; s++) {
+      if (s === 1) runStep1();
+      else if (s === 2) runStep2();
+      else if (s === 3) runStep3();
+      else if (s === 4) runStep4();
+    }
   }
 
   /* ---- STEP 1 ---- */
@@ -1776,7 +1785,6 @@
   window.onload = async () => {
     buildGrid();
     await loadScenario("1");
-    runAll();
   };
 </script>
 </body>
