@@ -43,23 +43,32 @@ def run_experiment_1(seeds: List[int]) -> Dict[str, Any]:
             probs = {(r, c): {base_puzzle[r][c]: 0.95} for r in range(9) for c in range(9) if base_puzzle[r][c] != 0}
             
             # Inject misreads
-            np.random.seed(seed + num_misreads)
+            rng = np.random.RandomState(seed + num_misreads)
             if num_misreads > 0:
-                coords_to_corrupt = [valid_coords[i] for i in np.random.choice(len(valid_coords), num_misreads, replace=False)]
+                coords_to_corrupt = [valid_coords[i] for i in rng.choice(len(valid_coords), num_misreads, replace=False)]
                 for r, c in coords_to_corrupt:
                     true_val = base_puzzle[r][c]
-                    # Ensure the misread value isn't the true value
-                    misread_val = (true_val % 9) + 1
+                    peer_digits = set()
+                    for i in range(9):
+                        if i != c and base_puzzle[r][i] != 0: peer_digits.add(base_puzzle[r][i])
+                        if i != r and base_puzzle[i][c] != 0: peer_digits.add(base_puzzle[i][c])
+                    misread_val = sorted(list(peer_digits))[0] if peer_digits else ((true_val % 9) + 1)
                     corrupted[r][c] = misread_val
                     probs[(r, c)] = {misread_val: 0.55, true_val: 0.40, (misread_val % 9) + 1: 0.05}
             
             for algo_name, solver_cls in algorithms.items():
-                prob_model = CorrectionSearchProblem(corrupted, probs, max_corrections=5)
+                prob_model = CorrectionSearchProblem(corrupted, probs, max_corrections=3)
                 solver = solver_cls()
-                succ, _, _ = solver.search(prob_model)
+                succ, node, _ = solver.search(prob_model)
+                
+                # Check EXACT recovery: did we recover the uncorrupted ground-truth base_puzzle?
+                is_recovered = False
+                if succ and node:
+                    final_grid = prob_model.get_corrected_grid(node.corrections)
+                    is_recovered = (final_grid == base_puzzle)
                 
                 results[algo_name][num_misreads].append({
-                    "success": 1 if succ else 0,
+                    "success": 1 if is_recovered else 0,
                     "nodes_expanded": solver.nodes_expanded,
                     "nodes_generated": solver.nodes_generated,
                     "time": solver.elapsed_time
