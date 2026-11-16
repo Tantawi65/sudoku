@@ -245,27 +245,33 @@ def run_all_experiments():
     print("=" * 80)
 
     print("\n[TABLE 1: Search Algorithm Comparison across 0-4 Misreads (5 Seeds)]")
-    print(f"{'Algorithm':<10} | {'Misreads':<8} | {'Recovery Rate':<14} | {'Nodes Expanded (Mean ± Std)':<28} | {'Time (s)':<10}")
+    print(f"{'Algorithm':<10} | {'Misreads':<8} | {'Recovery Rate':<14} | {'Nodes Expanded (Mean +/- Std)':<28} | {'Time (s)':<10}")
     print("-" * 80)
     for algo in ["AStar", "UCS", "Greedy"]:
         for m in [0, 1, 2, 3, 4]:
             st = exp1_data[algo][m]
-            print(f"{algo:<10} | {m:<8} | {st['recovery_rate_mean']*100:>12.1f}% | {st['nodes_expanded_mean']:>10.2f} ± {st['nodes_expanded_std']:<14.2f} | {st['time_mean']:>8.4f}")
+            print(f"{algo:<10} | {m:<8} | {st['recovery_rate_mean']*100:>12.1f}% | {st['nodes_expanded_mean']:>10.2f} +/- {st['nodes_expanded_std']:<14.2f} | {st['time_mean']:>8.4f}")
 
     print("\n[TABLE 2: CSP Pruning Mechanisms across 25, 30, 35 Givens (5 Seeds)]")
-    print(f"{'Givens':<8} | {'Algorithm':<10} | {'Assignments (Mean ± Std)':<26} | {'Backtracks (Mean ± Std)':<26} | {'Time (s)':<10}")
-    print("-" * 88)
+    print(f"{'Givens':<8} | {'Algorithm':<16} | {'Assignments (Mean +/- Std)':<26} | {'Backtracks (Mean +/- Std)':<26} | {'Time (s)':<10}")
+    print("-" * 94)
+    mode_labels = {
+        "BT": "BT alone",
+        "FC": "BT + FC",
+        "AC3": "BT + FC + AC-3"
+    }
     for g in [25, 30, 35]:
         for mode in ["BT", "FC", "AC3"]:
             st = exp2_data[mode][g]
-            print(f"{g:<8} | {mode:<10} | {st['assignments_mean']:>10.1f} ± {st['assignments_std']:<12.1f} | {st['backtracks_mean']:>10.1f} ± {st['backtracks_std']:<12.1f} | {st['time_mean']:>8.4f}")
+            lbl = mode_labels[mode]
+            print(f"{g:<8} | {lbl:<16} | {st['assignments_mean']:>10.1f} +/- {st['assignments_std']:<12.1f} | {st['backtracks_mean']:>10.1f} +/- {st['backtracks_std']:<12.1f} | {st['time_mean']:>8.4f}")
 
     print("\n[TABLE 3: Neural Network Guidance Impact (2 Misreads, 5 Seeds)]")
-    print(f"{'Strategy':<20} | {'Recovery Rate':<14} | {'Nodes Expanded (Mean ± Std)':<28} | {'Time (s)':<10}")
+    print(f"{'Strategy':<20} | {'Recovery Rate':<14} | {'Nodes Expanded (Mean +/- Std)':<28} | {'Time (s)':<10}")
     print("-" * 80)
     for strat in ["NN_Guided", "Random_Correction", "No_Correction"]:
         st = exp3_data[strat]
-        print(f"{strat:<20} | {st['recovery_rate_mean']*100:>12.1f}% | {st['nodes_expanded_mean']:>10.2f} ± {st['nodes_expanded_std']:<14.2f} | {st['time_mean']:>8.4f}")
+        print(f"{strat:<20} | {st['recovery_rate_mean']*100:>12.1f}% | {st['nodes_expanded_mean']:>10.2f} +/- {st['nodes_expanded_std']:<14.2f} | {st['time_mean']:>8.4f}")
     print("=" * 80 + "\n")
 
 if __name__ == "__main__":

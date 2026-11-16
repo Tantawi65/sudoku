@@ -18,7 +18,7 @@ def generate_markdown_tables(data: dict = None) -> None:
     os.makedirs("eval/results", exist_ok=True)
     out_path = "eval/results/experiment_tables.md"
     
-    with open(out_path, "w") as f:
+    with open(out_path, "w", encoding="utf-8") as f:
         f.write("# Experiment Results\n\n")
         
         # Exp 1
@@ -29,17 +29,23 @@ def generate_markdown_tables(data: dict = None) -> None:
         for algo in ["AStar", "UCS", "Greedy"]:
             for m in [0, 1, 2, 3, 4]:
                 st = exp1[algo].get(m) if m in exp1[algo] else exp1[algo].get(str(m))
-                f.write(f"| {algo} | {m} | {st['recovery_rate_mean']*100:.1f}% | {st['nodes_expanded_mean']:.1f} ± {st['nodes_expanded_std']:.1f} | {st['nodes_generated_mean']:.1f} ± {st['nodes_generated_std']:.1f} | {st['time_mean']:.4f} |\n")
+                f.write(f"| {algo} | {m} | {st['recovery_rate_mean']*100:.1f}% | {st['nodes_expanded_mean']:.1f} +/- {st['nodes_expanded_std']:.1f} | {st['nodes_generated_mean']:.1f} +/- {st['nodes_generated_std']:.1f} | {st['time_mean']:.4f} |\n")
         
         # Exp 2
         f.write("\n## Experiment 2: CSP Pruning Comparison\n")
-        f.write("| Givens | Mode | Assignments | Backtracks | Time (s) |\n")
-        f.write("|--------|------|-------------|------------|----------|\n")
+        f.write("| Givens | Algorithm | Assignments | Backtracks | Time (s) |\n")
+        f.write("|--------|-----------|-------------|------------|----------|\n")
         exp2 = data["experiment_2"]["summary"]
+        mode_labels = {
+            "BT": "BT alone",
+            "FC": "BT + FC",
+            "AC3": "BT + FC + AC-3"
+        }
         for givens in ["25", "30", "35"]:
             for mode in ["BT", "FC", "AC3"]:
                 st = exp2[mode].get(givens) or exp2[mode].get(int(givens))
-                f.write(f"| {givens} | {mode} | {st['assignments_mean']:.1f} ± {st['assignments_std']:.1f} | {st['backtracks_mean']:.1f} ± {st['backtracks_std']:.1f} | {st['time_mean']:.4f} |\n")
+                lbl = mode_labels[mode]
+                f.write(f"| {givens} | {lbl} | {st['assignments_mean']:.1f} +/- {st['assignments_std']:.1f} | {st['backtracks_mean']:.1f} +/- {st['backtracks_std']:.1f} | {st['time_mean']:.4f} |\n")
                 
         # Exp 3
         f.write("\n## Experiment 3: Guidance Impact (2 Misreads)\n")
@@ -48,7 +54,7 @@ def generate_markdown_tables(data: dict = None) -> None:
         exp3 = data["experiment_3"]["summary"]
         for strat in ["NN_Guided", "Random_Correction", "No_Correction"]:
             st = exp3[strat]
-            f.write(f"| {strat} | {st['recovery_rate_mean']*100:.1f}% | {st['nodes_expanded_mean']:.1f} ± {st['nodes_expanded_std']:.1f} | {st['time_mean']:.4f} |\n")
+            f.write(f"| {strat} | {st['recovery_rate_mean']*100:.1f}% | {st['nodes_expanded_mean']:.1f} +/- {st['nodes_expanded_std']:.1f} | {st['time_mean']:.4f} |\n")
             
     print(f"Tables written to {out_path}")
 
@@ -75,9 +81,9 @@ def generate_plots(data: dict = None) -> None:
     x = range(len(givens))
     width = 0.25
     
-    plt.bar([pos - width for pos in x], bt_means, width, label='BT')
-    plt.bar(x, fc_means, width, label='FC')
-    plt.bar([pos + width for pos in x], ac3_means, width, label='AC-3')
+    plt.bar([pos - width for pos in x], bt_means, width, label='BT alone')
+    plt.bar(x, fc_means, width, label='BT + FC')
+    plt.bar([pos + width for pos in x], ac3_means, width, label='BT + FC + AC-3')
     
     plt.yscale('log')
     plt.xlabel('Number of Givens')

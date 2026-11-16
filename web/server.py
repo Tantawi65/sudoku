@@ -262,7 +262,7 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
     solver = UnifiedCSPSolver(mode=sel_mode)
     solved_board = solver.solve(csp_solve)
 
-    mode_label = "Forward Checking (FC + MRV)" if sel_mode == "FC" else ("Pure Backtracking (BT)" if sel_mode == "BT" else "AC-3 Pre-check + FC")
+    mode_label = "BT + FC (Forward Checking + MRV)" if sel_mode == "FC" else ("BT alone (Pure Backtracking)" if sel_mode == "BT" else "BT + FC + AC-3 (AC-3 Pre-check + FC)")
 
     return {
         "scenario_id": scenario_id,
@@ -331,7 +331,7 @@ def run_live_comparison(scenario_id: str) -> dict:
     # 2. LIVE CSP COMPARISON (Exp 2 on this exact board)
     exp2_live = []
     test_csp_grid = corrected_grid if conflicts else grid
-    for mode, label in [("BT", "Pure Backtracking"), ("FC", "Forward Checking + MRV"), ("AC3", "AC-3 + Forward Checking")]:
+    for mode, label in [("BT", "BT alone"), ("FC", "BT + FC"), ("AC3", "BT + FC + AC-3")]:
         solver = UnifiedCSPSolver(mode=mode)
         csp = SudokuCSP(test_csp_grid)
         sol = solver.solve(csp)
