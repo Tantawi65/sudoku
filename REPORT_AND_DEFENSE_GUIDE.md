@@ -45,9 +45,10 @@ This document provides everything needed to present the **Handwritten Sudoku Rea
     Because at least this cost must be incurred to eliminate the conflict, $h(n)$ is strictly admissible ($h(n) \le h^*(n)$) and monotonic.
 
 ### Slide 5: Experimental Results & Conclusions (7:30 – 10:00)
-* **Experiment 1 (Search):** A* achieves 100% solution recovery across 0–4 misreads while expanding fewer nodes than Greedy search.
-* **Experiment 2 (CSP):** Forward Checking reduces backtracks from 27,160 (pure BT) down to 95.4 (a 280x reduction on 25-given puzzles).
-* **Experiment 3 (NN Guidance):** Probability-guided search achieves 100% recovery with only 3.8 nodes expanded, whereas random guessing achieves only 20% recovery while expanding over 276 nodes.
+* **Experiment 1 (Search):** Under the rubric constraint (*Maximum 3 corrections*), A* achieves 100% solution recovery across 0–3 misreads with minimal node expansions. For 4 misreads, recovery is strictly 0.0% as the depth bound $k \le 3$ is faithfully respected.
+* **Experiment 2 (CSP):** Forward Checking reduces backtracks from 27,160 (`BT alone`) down to 95.4 (`BT + FC` and `BT + FC + AC-3`)—a 280x reduction on 25-given puzzles.
+* **Experiment 3 (NN Guidance):** Probability-guided search achieves 100% recovery with only 3.4 nodes expanded, whereas random guessing achieves only 20% recovery while expanding over 676 nodes, and no-correction fails at 0%.
+* **Deliverable 4 (100-Puzzle Benchmark):** Benchmarked across 100 puzzles (`python -m eval.experiments --large`), demonstrating 100%, 99%, and 100% recovery for 1, 2, and 3 misreads in under 43 ms per puzzle.
 
 ---
 
@@ -57,13 +58,14 @@ During the demo, open your terminal and run:
 ```bash
 python run_demo.py
 ```
-Type `4` to run the continuous demonstration.
+Type `4` to run the continuous demonstration (or pass `4` via command line: `python run_demo.py 4`).
 
-### Step 1: Explain the End-to-End Pipeline
-* **What appears on screen:** A 9×9 Sudoku grid where cell $(0, 0)$ is misread as `6` instead of `5`.
+### Step 1: Explain the End-to-End Pipeline & Cooperation Plot
+* **What appears on screen:** A 9×9 Sudoku grid with an injected misread, AC-3 conflict detection, A* correction trace, and solved puzzle, saving the 4-panel cooperation plot `eval/plots/demo_pipeline_cooperation.png` (Checklist Item 7).
 * **What you say to the TA:**
-  > *"Here you can see the initial grid read by our Convolutional Neural Network. Notice that cell (0, 0) was predicted as a 6, but there is already a 6 in column 0 at row 1. When our pipeline runs AC-3, it tests the directed arcs between neighbors. Because both cells claim 6, the domain of their common neighbors collapses. AC-3 instantly detects this conflict and triggers the A\* search engine."*
-  > *"A\* searches through candidate substitutions weighted by neural network confidence gaps. It tests changing (0, 0) from 6 to 5 with a tiny penalty cost of 0.07. AC-3 verifies that the conflict is resolved, and Forward Checking finishes solving the puzzle in just 31 milliseconds."*
+  > *"Here you can see the initial grid read by our Convolutional Neural Network. Notice that cell (0, 2) was predicted as a 1, but there is already a 1 in column 2. When our pipeline runs AC-3, it tests the directed arcs between neighbors. Because both cells claim 1, the domain of their common neighbors collapses. AC-3 instantly detects this conflict and triggers the A\* search engine."*
+  > *"A\* searches through candidate substitutions weighted by neural network confidence gaps. It tests changing (0, 2) from 1 to 3 with a tiny penalty cost of 0.07. AC-3 verifies that the conflict is resolved, and Forward Checking finishes solving the puzzle in just 30 milliseconds."*
+  > *"Furthermore, our run_demo.py automatically exports the cooperation figure 'eval/plots/demo_pipeline_cooperation.png' showing: (1) NN probability distribution and ambiguity, (2) AC-3 arc tests and domain pruning, (3) A\* priority evaluation curve f(n)=g(n)+h(n), and (4) CSP backtrack reduction."*
 
 ### Step 2: Explain CSP Pruning (BT vs. FC vs. AC-3)
 * **What appears on screen:** The comparison table on a 25-given puzzle.
@@ -95,3 +97,10 @@ Type `4` to run the continuous demonstration.
 
 #### Q5: "How did you ensure puzzle generation produces a unique solution?"
 > **Answer:** *"When creating puzzles in `data/generator.py`, we generate a full board via randomized backtracking and then remove clues one by one. For each candidate clue removal, we call our CSP solver with `stop_at_one=False` and a cap of 2 solutions. If the solver finds $\ge 2$ solutions, the clue is restored. This guarantees that every generated puzzle has exactly one mathematically unique solution."*
+
+#### Q6: "Why is the recovery rate 0% for 4 misreads in Experiment 1?"
+> **Answer:** *"The course specification explicitly enforces a strict search limit: 'Maximum 3 corrections.' If a puzzle has 4 injected misreads, an algorithm constrained to at most 3 corrections cannot mathematically repair all 4 corrupted cells to recover the true ground-truth board. The search terminates at depth limit $k=3$ and returns failure, giving a 0.0% recovery rate. This strictly proves that the depth bound $k \le 3$ is faithfully enforced by our search engine."*
+
+#### Q7: "How did you implement the optional extension for unique solution verification during correction search?"
+> **Answer:** *"In `CorrectionSearchProblem` and `SudokuPipeline`, we added the parameter `require_unique: bool = False`. In the goal test `is_goal(corrections)`, when `require_unique=True`, the solver runs `solver.count_solutions(csp, max_count=2) == 1`. If a candidate correction set yields a board with multiple solutions, the state is rejected, ensuring the corrected puzzle is well-formed with a single unique solution."*
+

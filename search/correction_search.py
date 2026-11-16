@@ -46,12 +46,14 @@ class CorrectionSearchProblem:
         initial_grid: List[List[int]],
         probabilities: Dict[Tuple[int, int], Dict[int, float]],
         max_corrections: int = 3,
-        top_k_alternatives: int = 3
+        top_k_alternatives: int = 3,
+        require_unique: bool = False
     ):
         self.initial_grid = [row[:] for row in initial_grid]
         self.probabilities = probabilities
         self.max_corrections = max_corrections
         self.top_k_alternatives = top_k_alternatives
+        self.require_unique = require_unique
         self.clue_cells = list(probabilities.keys())
 
     def get_corrected_grid(self, corrections: Tuple[Tuple[Tuple[int, int], int], ...]) -> List[List[int]]:
@@ -160,7 +162,15 @@ class CorrectionSearchProblem:
             return False, None
 
         solver = UnifiedCSPSolver(mode="FC")
-        solution = solver.solve(csp, stop_at_one=True)
+        if self.require_unique:
+            # Optional extension (Page 15): Uniqueness goal (require exactly one solution)
+            if solver.count_solutions(csp, max_count=2) != 1:
+                return False, None
+            solution = solver.solve(SudokuCSP(grid), stop_at_one=True)
+        else:
+            # Minimum version (Page 15): "puzzle solvable" goal
+            solution = solver.solve(csp, stop_at_one=True)
+
         if solution is not None:
             return True, solution
         return False, None

@@ -1,8 +1,11 @@
-torch>=2.0.0
-torchvision>=0.15.0
-numpy>=1.24.0
-scipy>=1.10.0
-scikit-learn>=1.3.0
-matplotlib>=3.7.0
-pillow>=10.0.0
-tqdm>=4.66.0
+# Core Dependencies (Pinned to current tested environment)
+numpy==1.24.3
+scipy==1.10.1
+scikit-learn==1.3.2
+matplotlib==3.7.5
+pillow==10.4.0
+tqdm==4.67.1
+
+# Optional deep learning framework (for DigitCNN mode if available)
+# torch>=2.0.0
+# torchvision>=0.15.0

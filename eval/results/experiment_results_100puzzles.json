@@ -1,0 +1,38 @@
+{
+    "metadata": {
+        "num_puzzles": 100,
+        "total_benchmark_time_s": 32.666094
+    },
+    "summary": {
+        "1": {
+            "num_puzzles": 100,
+            "recovery_rate": 1.0,
+            "nodes_expanded_mean": 2.0,
+            "nodes_expanded_std": 0.0,
+            "nodes_generated_mean": 2.88,
+            "nodes_generated_std": 0.32496153618543844,
+            "time_mean_ms": 39.13595499999993,
+            "time_total_s": 3.9135954999999933
+        },
+        "2": {
+            "num_puzzles": 100,
+            "recovery_rate": 0.99,
+            "nodes_expanded_mean": 4.06,
+            "nodes_expanded_std": 0.5799999999999998,
+            "nodes_generated_mean": 7.42,
+            "nodes_generated_std": 1.2663332894621384,
+            "time_mean_ms": 39.29123200000002,
+            "time_total_s": 3.9291232000000025
+        },
+        "3": {
+            "num_puzzles": 100,
+            "recovery_rate": 1.0,
+            "nodes_expanded_mean": 8.69,
+            "nodes_expanded_std": 1.8258970398135819,
+            "nodes_generated_mean": 18.44,
+            "nodes_generated_std": 2.4751565607047974,
+            "time_mean_ms": 42.26006299999993,
+            "time_total_s": 4.226006299999993
+        }
+    }
+}

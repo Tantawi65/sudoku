@@ -206,6 +206,92 @@ def run_experiment_3(seeds: List[int]) -> Dict[str, Any]:
     print("Experiment 3 complete.")
     return summary
 
+def run_large_benchmark(num_puzzles: int = 100) -> Dict[int, Any]:
+    """
+    Course Deliverable 4:
+    Evaluation on a large test set of at least 100 puzzles with injected misreads (1-3 misreads).
+    Reports recovery rate (% where true board was recovered) and total solve time.
+    """
+    print(f"\n" + "=" * 80)
+    print(f"DELIVERABLE 4: LARGE BENCHMARK ON {num_puzzles} PUZZLES (1-3 INJECTED MISREADS)")
+    print("=" * 80)
+    
+    seeds = list(range(1, num_puzzles + 1))
+    misread_levels = [1, 2, 3]
+    large_results = defaultdict(lambda: defaultdict(list))
+    
+    start_all = time.perf_counter()
+    
+    for seed_idx, seed in enumerate(seeds):
+        if (seed_idx + 1) % 25 == 0 or seed_idx == 0:
+            print(f"  Processing puzzle {seed_idx + 1}/{num_puzzles}...")
+        gen = SudokuGenerator(seed=seed)
+        base_puzzle, _ = gen.generate_puzzle(num_givens=30)
+        valid_coords = [(r, c) for r in range(9) for c in range(9) if base_puzzle[r][c] != 0]
+        
+        for num_misreads in misread_levels:
+            corrupted = [row[:] for row in base_puzzle]
+            probs = {(r, c): {base_puzzle[r][c]: 0.95} for r in range(9) for c in range(9) if base_puzzle[r][c] != 0}
+            
+            rng = np.random.RandomState(seed + num_misreads * 1000)
+            coords_to_corrupt = [valid_coords[i] for i in rng.choice(len(valid_coords), num_misreads, replace=False)]
+            for r, c in coords_to_corrupt:
+                true_val = base_puzzle[r][c]
+                peer_digits = set()
+                for i in range(9):
+                    if i != c and base_puzzle[r][i] != 0: peer_digits.add(base_puzzle[r][i])
+                    if i != r and base_puzzle[i][c] != 0: peer_digits.add(base_puzzle[i][c])
+                misread_val = sorted(list(peer_digits))[0] if peer_digits else ((true_val % 9) + 1)
+                corrupted[r][c] = misread_val
+                probs[(r, c)] = {misread_val: 0.55, true_val: 0.40, (misread_val % 9) + 1: 0.05}
+                
+            prob_model = CorrectionSearchProblem(corrupted, probs, max_corrections=3)
+            solver = AStarSolver()
+            t0 = time.perf_counter()
+            succ, node, _ = solver.search(prob_model)
+            solve_time = time.perf_counter() - t0
+            
+            is_recovered = False
+            if succ and node:
+                final_grid = prob_model.get_corrected_grid(node.corrections)
+                is_recovered = (final_grid == base_puzzle)
+                
+            large_results[num_misreads]["recovered"].append(1.0 if is_recovered else 0.0)
+            large_results[num_misreads]["nodes_expanded"].append(solver.nodes_expanded)
+            large_results[num_misreads]["nodes_generated"].append(solver.nodes_generated)
+            large_results[num_misreads]["time"].append(solve_time)
+
+    total_time_all = time.perf_counter() - start_all
+    
+    summary = {}
+    for m in misread_levels:
+        summary[m] = {
+            "num_puzzles": num_puzzles,
+            "recovery_rate": float(np.mean(large_results[m]["recovered"])),
+            "nodes_expanded_mean": float(np.mean(large_results[m]["nodes_expanded"])),
+            "nodes_expanded_std": float(np.std(large_results[m]["nodes_expanded"])),
+            "nodes_generated_mean": float(np.mean(large_results[m]["nodes_generated"])),
+            "nodes_generated_std": float(np.std(large_results[m]["nodes_generated"])),
+            "time_mean_ms": float(np.mean(large_results[m]["time"]) * 1000),
+            "time_total_s": float(np.sum(large_results[m]["time"]))
+        }
+        
+    out_path = "eval/results/experiment_results_100puzzles.json"
+    with open(out_path, "w") as f:
+        json.dump({"metadata": {"num_puzzles": num_puzzles, "total_benchmark_time_s": total_time_all}, "summary": summary}, f, indent=4)
+        
+    print(f"\nLarge benchmark complete in {total_time_all:.2f}s! Saved to {out_path}\n")
+    print("=" * 80)
+    print("      DELIVERABLE 4: 100-PUZZLE TEST SET BENCHMARK RESULTS")
+    print("=" * 80)
+    print(f"{'Misreads':<10} | {'Puzzles Tested':<16} | {'Recovery Rate':<16} | {'Nodes Expanded (Mean +/- Std)':<28} | {'Avg Time (ms)':<14}")
+    print("-" * 92)
+    for m in misread_levels:
+        st = summary[m]
+        print(f"{m:<10} | {st['num_puzzles']:<16} | {st['recovery_rate']*100:>14.1f}% | {st['nodes_expanded_mean']:>10.2f} +/- {st['nodes_expanded_std']:<14.2f} | {st['time_mean_ms']:>10.2f} ms")
+    print("=" * 92 + "\n")
+    return summary
+
 def run_all_experiments():
     seeds = [42, 101, 2024, 777, 999]
     print(f"Running experiments across {len(seeds)} random seeds: {seeds}")
@@ -284,4 +370,12 @@ def run_all_experiments():
     print("=" * 80 + "\n")
 
 if __name__ == "__main__":
-    run_all_experiments()
+    import argparse
+    parser = argparse.ArgumentParser(description="Course Sudoku Experiments Evaluation")
+    parser.add_argument("--large", action="store_true", help="Run 100-puzzle benchmark (Deliverable 4)")
+    args = parser.parse_args()
+    
+    if args.large:
+        run_large_benchmark(num_puzzles=100)
+    else:
+        run_all_experiments()

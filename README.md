@@ -90,13 +90,16 @@ python -m nn.train
 ```
 
 ### Step 3: Run the 3 Experimental Studies
-To execute Experiments 1, 2, and 3 across 5 random seeds (`[42, 101, 2024, 777, 999]`) and generate mean ± std tables:
+To execute Experiments 1, 2, and 3 across 5 random seeds (`[42, 101, 2024, 777, 999]`) and generate mean ± std tables and PNG plots:
 ```bash
 # Run experiments and write eval/results/experiment_results.json
 python -m eval.experiments
 
-# Generate summary Markdown tables and PNG charts
+# Generate summary Markdown tables and PNG charts (eval/plots/)
 python -m eval.plot_results
+
+# Optional Deliverable 4: Run large test set benchmark across 100 distinct puzzles
+python -m eval.experiments --large
 ```
 
 ### Step 4: 5-Minute Live Demo (For TA Evaluation)
@@ -104,17 +107,20 @@ To launch the interactive live demonstration:
 ```bash
 python run_demo.py
 ```
+Or run non-interactively: `python run_demo.py 4` (or `1`, `2`, `3`).
 
 The demo menu allows triggering:
-* **Option 1:** Full end-to-end pipeline (shows initial misread board, AC-3 conflict detection, A* correction search, and solved board).
+* **Option 1:** Full end-to-end pipeline (shows initial misread board, AC-3 conflict detection, A* correction search, solved board, and automatically generates the 4-panel cooperation plot `eval/plots/demo_pipeline_cooperation.png` fulfilling Common Checklist Item 7).
 * **Option 2:** Live CSP pruning comparison (`BT` vs `FC` vs `AC-3`), highlighting backtracks reduced by multiple orders of magnitude.
 * **Option 3:** Neural Network guidance impact (`NN ON` vs `NN OFF / Random`), demonstrating why probability-guided search prevents combinatorial explosion.
-* **Option 4:** Complete continuous walkthrough of all three parts.
+* **Option 4:** Complete continuous walkthrough of all three parts and plot generation.
 
 ---
 
 ## 5. Experimental Summary
 
-* **Experiment 1 (Search Comparison):** Evaluates UCS vs. Greedy vs. A* over 0 to 4 injected misreads. A* and UCS achieve 100% recovery rates, while A* minimizes node expansions through the conflict-reduction heuristic.
-* **Experiment 2 (CSP Pruning):** On 25-given puzzles, pure Backtracking requires an average of **27,160 backtracks**, whereas Forward Checking reduces backtracks to **95.4** (a 280x reduction).
-* **Experiment 3 (Guidance Impact):** On puzzles with 2 misreads, NN-guided A* achieves **100% solution recovery** expanding an average of **3.8 nodes**, whereas unguided/random search achieves only **20% recovery** expanding over **276 nodes**.
+* **Experiment 1 (Search Comparison):** Evaluates UCS vs. Greedy vs. A* over 0 to 4 injected misreads under the strict rubric constraint (**Maximum 3 corrections**). For 0, 1, 2, and 3 misreads, all algorithms achieve 100% exact recovery of the ground-truth board. For 4 misreads, recovery is strictly 0.0% because repairing 4 corrupted digits exceeds the maximum depth bound of $k \le 3$.
+* **Experiment 2 (CSP Pruning):** On 25-given puzzles, pure Backtracking (`BT alone`) requires an average of **27,160 backtracks**, whereas Forward Checking (`BT + FC`) and `BT + FC + AC-3` reduce backtracks to **95.4** (a 280x reduction).
+* **Experiment 3 (Guidance Impact):** On puzzles with 2 misreads, NN-guided A* achieves **100% solution recovery** expanding an average of **3.4 nodes**, whereas random guidance achieves only **20% recovery** expanding an average of **676.8 nodes**, and no correction achieves **0% recovery**.
+* **Deliverable 4 (Large 100-Puzzle Benchmark):** Across 100 independently generated puzzles with 1, 2, and 3 misreads, the pipeline achieves **100%**, **99%**, and **100%** recovery with average solve times under **43 ms**.
+* **Optional Extension (Uniqueness Verification):** `CorrectionSearchProblem` and `SudokuPipeline` support `require_unique=True`, enforcing that any candidate corrected board possesses exactly one unique mathematical solution (`count_solutions == 1`).

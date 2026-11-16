@@ -78,13 +78,15 @@ class SudokuPipeline:
         probabilities: Dict[Tuple[int, int], Dict[int, float]],
         search_algo: str = "astar",
         csp_mode: str = "AC3",
-        max_corrections: int = 3
+        max_corrections: int = 3,
+        require_unique: bool = False
     ) -> Dict[str, Any]:
         """
         Executes the full pipeline:
         1. Checks initial grid with AC-3
         2. If invalid/conflicted, invokes Search (A*, UCS, or Greedy)
         3. Invokes CSP to complete the puzzle
+        Supports minimum version (solvable goal) and optional extension (uniqueness goal).
         """
         result: Dict[str, Any] = {
             "initial_grid": [row[:] for row in initial_grid],
@@ -105,7 +107,14 @@ class SudokuPipeline:
         if is_consistent and not csp_check.has_immediate_conflict():
             # Try direct CSP solve
             solver = UnifiedCSPSolver(mode=csp_mode)
-            solved = solver.solve(SudokuCSP(initial_grid))
+            if require_unique:
+                if solver.count_solutions(SudokuCSP(initial_grid), max_count=2) == 1:
+                    solved = solver.solve(SudokuCSP(initial_grid))
+                else:
+                    solved = None
+            else:
+                solved = solver.solve(SudokuCSP(initial_grid))
+
             if solved is not None:
                 result["is_initially_valid"] = True
                 result["solved_grid"] = solved
@@ -122,7 +131,8 @@ class SudokuPipeline:
         problem = CorrectionSearchProblem(
             initial_grid=initial_grid,
             probabilities=probabilities,
-            max_corrections=max_corrections
+            max_corrections=max_corrections,
+            require_unique=require_unique
         )
 
         if search_algo.lower() == "ucs":

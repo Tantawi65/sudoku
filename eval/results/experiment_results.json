@@ -7,7 +7,7 @@
             777,
             999
         ],
-        "timestamp": "2026-11-16 03:45:59"
+        "timestamp": "2026-11-16 04:07:40"
     },
     "experiment_1": {
         "description": "Search Algorithm Comparison (UCS vs Greedy vs A*) across 0-4 misreads",
@@ -19,8 +19,8 @@
                     "nodes_expanded_std": 0.0,
                     "nodes_generated_mean": 1.0,
                     "nodes_generated_std": 0.0,
-                    "time_mean": 0.03245264000000012,
-                    "time_std": 0.00776348103510267
+                    "time_mean": 0.034831100000000025,
+                    "time_std": 0.009608712638225688
                 },
                 "1": {
                     "recovery_rate_mean": 1.0,
@@ -28,8 +28,8 @@
                     "nodes_expanded_std": 0.0,
                     "nodes_generated_mean": 3.0,
                     "nodes_generated_std": 0.0,
-                    "time_mean": 0.02883518000000005,
-                    "time_std": 0.0034298986978627236
+                    "time_mean": 0.027821859999999976,
+                    "time_std": 0.0018731070408281685
                 },
                 "2": {
                     "recovery_rate_mean": 1.0,
@@ -37,8 +37,8 @@
                     "nodes_expanded_std": 0.48989794855663565,
                     "nodes_generated_mean": 7.2,
                     "nodes_generated_std": 0.9797958971132712,
-                    "time_mean": 0.02889214,
-                    "time_std": 0.003072787030433376
+                    "time_mean": 0.033351240000000094,
+                    "time_std": 0.006523846081752747
                 },
                 "3": {
                     "recovery_rate_mean": 1.0,
@@ -46,8 +46,8 @@
                     "nodes_expanded_std": 1.5999999999999999,
                     "nodes_generated_mean": 19.2,
                     "nodes_generated_std": 1.1661903789690602,
-                    "time_mean": 0.03550205999999996,
-                    "time_std": 0.005837114634337822
+                    "time_mean": 0.032356720000000116,
+                    "time_std": 0.002211005182626183
                 },
                 "4": {
                     "recovery_rate_mean": 0.0,
@@ -55,8 +55,8 @@
                     "nodes_expanded_std": 24.32776191925595,
                     "nodes_generated_mean": 46.6,
                     "nodes_generated_std": 23.988330496305906,
-                    "time_mean": 0.02252024000000006,
-                    "time_std": 0.009153067121921498
+                    "time_mean": 0.01823370000000004,
+                    "time_std": 0.005690861240620754
                 }
             },
             "UCS": {
@@ -66,8 +66,8 @@
                     "nodes_expanded_std": 0.0,
                     "nodes_generated_mean": 1.0,
                     "nodes_generated_std": 0.0,
-                    "time_mean": 0.03277462000000009,
-                    "time_std": 0.009530858496358013
+                    "time_mean": 0.030804519999999957,
+                    "time_std": 0.003788195685758519
                 },
                 "1": {
                     "recovery_rate_mean": 1.0,
@@ -75,8 +75,8 @@
                     "nodes_expanded_std": 0.0,
                     "nodes_generated_mean": 3.0,
                     "nodes_generated_std": 0.0,
-                    "time_mean": 0.027459139999999983,
-                    "time_std": 0.001857526800452553
+                    "time_mean": 0.027836940000000077,
+                    "time_std": 0.002246228094027919
                 },
                 "2": {
                     "recovery_rate_mean": 1.0,
@@ -84,8 +84,8 @@
                     "nodes_expanded_std": 0.48989794855663565,
                     "nodes_generated_mean": 8.6,
                     "nodes_generated_std": 0.48989794855663565,
-                    "time_mean": 0.032625479999999915,
-                    "time_std": 0.005839262207984864
+                    "time_mean": 0.029720140000000138,
+                    "time_std": 0.003937798609680209
                 },
                 "3": {
                     "recovery_rate_mean": 1.0,
@@ -93,8 +93,8 @@
                     "nodes_expanded_std": 1.5999999999999999,
                     "nodes_generated_mean": 25.4,
                     "nodes_generated_std": 1.9595917942265424,
-                    "time_mean": 0.05687178,
-                    "time_std": 0.04266974637681356
+                    "time_mean": 0.04184051999999987,
+                    "time_std": 0.00889163376470259
                 },
                 "4": {
                     "recovery_rate_mean": 0.0,
@@ -102,8 +102,8 @@
                     "nodes_expanded_std": 24.32776191925595,
                     "nodes_generated_mean": 104.0,
                     "nodes_generated_std": 57.15242776995567,
-                    "time_mean": 0.024597919999999985,
-                    "time_std": 0.012028958806380592
+                    "time_mean": 0.018949560000000077,
+                    "time_std": 0.006593602927262143
                 }
             },
             "Greedy": {
@@ -113,8 +113,8 @@
                     "nodes_expanded_std": 0.0,
                     "nodes_generated_mean": 1.0,
                     "nodes_generated_std": 0.0,
-                    "time_mean": 0.027230300000000086,
-                    "time_std": 0.0020897447853744696
+                    "time_mean": 0.03068415999999994,
+                    "time_std": 0.005506601333163708
                 },
                 "1": {
                     "recovery_rate_mean": 1.0,
@@ -122,8 +122,8 @@
                     "nodes_expanded_std": 0.0,
                     "nodes_generated_mean": 3.0,
                     "nodes_generated_std": 0.0,
-                    "time_mean": 0.02942689999999981,
-                    "time_std": 0.004574142300366172
+                    "time_mean": 0.029125720000000042,
+                    "time_std": 0.004624843876889302
                 },
                 "2": {
                     "recovery_rate_mean": 1.0,
@@ -131,8 +131,8 @@
                     "nodes_expanded_std": 0.0,
                     "nodes_generated_mean": 6.4,
                     "nodes_generated_std": 0.7999999999999999,
-                    "time_mean": 0.03269489999999977,
-                    "time_std": 0.005536142227941744
+                    "time_mean": 0.033142799999999986,
+                    "time_std": 0.006063067506138979
                 },
                 "3": {
                     "recovery_rate_mean": 1.0,
@@ -140,8 +140,8 @@
                     "nodes_expanded_std": 0.39999999999999997,
                     "nodes_generated_mean": 12.4,
                     "nodes_generated_std": 0.8,
-                    "time_mean": 0.03541287999999998,
-                    "time_std": 0.013025142110456859
+                    "time_mean": 0.035858580000000105,
+                    "time_std": 0.00984690672859224
                 },
                 "4": {
                     "recovery_rate_mean": 0.0,
@@ -149,8 +149,8 @@
                     "nodes_expanded_std": 25.011997121381572,
                     "nodes_generated_mean": 46.6,
                     "nodes_generated_std": 23.988330496305906,
-                    "time_mean": 0.02632142000000002,
-                    "time_std": 0.01296441320637368
+                    "time_mean": 0.017640600000000006,
+                    "time_std": 0.006221411143783867
                 }
             }
         }
@@ -164,24 +164,24 @@
                     "assignments_std": 22863.76078776193,
                     "backtracks_mean": 27160.2,
                     "backtracks_std": 22863.76078776193,
-                    "time_mean": 0.52344954,
-                    "time_std": 0.44355889451216135
+                    "time_mean": 0.5234789999999998,
+                    "time_std": 0.4590044179981283
                 },
                 "30": {
                     "assignments_mean": 1323.8,
                     "assignments_std": 833.0623986232964,
                     "backtracks_mean": 1272.8,
                     "backtracks_std": 833.0623986232964,
-                    "time_mean": 0.02376886000000038,
-                    "time_std": 0.014273787732847768
+                    "time_mean": 0.02588658000000006,
+                    "time_std": 0.019893157593444042
                 },
                 "35": {
                     "assignments_mean": 699.2,
                     "assignments_std": 979.5834624982192,
                     "backtracks_mean": 653.2,
                     "backtracks_std": 979.5834624982192,
-                    "time_mean": 0.013494659999999747,
-                    "time_std": 0.01875340195170996
+                    "time_mean": 0.014365320000000103,
+                    "time_std": 0.0195957328941176
                 }
             },
             "FC": {
@@ -190,24 +190,24 @@
                     "assignments_std": 114.90100086596287,
                     "backtracks_mean": 95.4,
                     "backtracks_std": 114.90100086596287,
-                    "time_mean": 0.004892620000000037,
-                    "time_std": 0.0017106697511790046
+                    "time_mean": 0.004203860000000148,
+                    "time_std": 0.001973341594960431
                 },
                 "30": {
                     "assignments_mean": 84.0,
                     "assignments_std": 29.57701810527897,
                     "backtracks_mean": 33.0,
                     "backtracks_std": 29.57701810527897,
-                    "time_mean": 0.0027310999999999195,
-                    "time_std": 0.0005370169122107619
+                    "time_mean": 0.0027330400000002085,
+                    "time_std": 0.000939245283405553
                 },
                 "35": {
                     "assignments_mean": 46.8,
                     "assignments_std": 1.5999999999999999,
                     "backtracks_mean": 0.8,
                     "backtracks_std": 1.6000000000000003,
-                    "time_mean": 0.0017305600000003807,
-                    "time_std": 3.786230843511931e-05
+                    "time_mean": 0.002101099999999967,
+                    "time_std": 0.0004158140786454189
                 }
             },
             "AC3": {
@@ -216,24 +216,24 @@
                     "assignments_std": 114.64902965136687,
                     "backtracks_mean": 95.4,
                     "backtracks_std": 114.90100086596287,
-                    "time_mean": 0.046949119999999844,
-                    "time_std": 0.021225590072212554
+                    "time_mean": 0.037530020000000164,
+                    "time_std": 0.005214761405241777
                 },
                 "30": {
                     "assignments_mean": 60.8,
                     "assignments_std": 51.7818501021352,
                     "backtracks_mean": 33.0,
                     "backtracks_std": 29.57701810527897,
-                    "time_mean": 0.029655620000000306,
-                    "time_std": 0.006422876160537162
+                    "time_mean": 0.02863927999999998,
+                    "time_std": 0.0033786633454071886
                 },
                 "35": {
                     "assignments_mean": 15.8,
                     "assignments_std": 19.35355264544471,
                     "backtracks_mean": 0.8,
                     "backtracks_std": 1.6000000000000003,
-                    "time_mean": 0.025243240000000177,
-                    "time_std": 0.003307087425273371
+                    "time_mean": 0.027392639999999878,
+                    "time_std": 0.003537048018107995
                 }
             }
         }
@@ -245,22 +245,22 @@
                 "recovery_rate_mean": 1.0,
                 "nodes_expanded_mean": 3.4,
                 "nodes_expanded_std": 0.8,
-                "time_mean": 0.03520528000000027,
-                "time_std": 0.01615772599760235
+                "time_mean": 0.03523361999999963,
+                "time_std": 0.011473947463083618
             },
             "Random_Correction": {
                 "recovery_rate_mean": 0.2,
                 "nodes_expanded_mean": 676.8,
                 "nodes_expanded_std": 796.1330039635337,
-                "time_mean": 0.42590030000000034,
-                "time_std": 0.2579831405443929
+                "time_mean": 0.4466196200000002,
+                "time_std": 0.2835725271860964
             },
             "No_Correction": {
                 "recovery_rate_mean": 0.0,
                 "nodes_expanded_mean": 0.0,
                 "nodes_expanded_std": 0.0,
-                "time_mean": 0.0010523599999999079,
-                "time_std": 0.00028619529416108014
+                "time_mean": 0.0012600400000000178,
+                "time_std": 0.00039646857933516727
             }
         }
     }
