@@ -203,18 +203,21 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
     nodes_expanded = 0
     search_time_ms = 0.0
     queue_trace = []
-    algo_label = "A*"
+    
+    if search_algo.lower() == "ucs":
+        algo_label = "UCS (Uniform Cost Search)"
+    elif search_algo.lower() == "greedy":
+        algo_label = "Greedy Best-First Search"
+    else:
+        algo_label = "A* Search"
 
     if conflicts_list:
         if search_algo.lower() == "ucs":
             searcher = UCSSolver()
-            algo_label = "UCS (Uniform Cost Search)"
         elif search_algo.lower() == "greedy":
             searcher = GreedySolver()
-            algo_label = "Greedy Best-First Search"
         else:
             searcher = AStarSolver()
-            algo_label = "A* Search"
 
         succ, node, _ = searcher.search(prob_model)
         nodes_expanded = searcher.nodes_expanded
@@ -233,20 +236,47 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
                     "cost": float(cost)
                 })
 
+            is_ucs = (search_algo.lower() == "ucs")
+            is_greedy = (search_algo.lower() == "greedy")
+
             if len(search_corrections) == 1:
                 c1 = search_corrections[0]
+                c_cost = c1['cost']
+                g_root = 0.0
+                h_root = 0.0 if is_ucs else c_cost
+                f_root = h_root if is_greedy else (g_root + h_root)
+
+                g_sol = 0.0 if is_greedy else c_cost
+                h_sol = 0.0
+                f_sol = g_sol if is_ucs else (h_sol if is_greedy else g_sol + h_sol)
+
                 queue_trace = [
-                    {"iter": 1, "state": "Root ()", "g": "0.000", "h": f"{c1['cost']:.3f}", "f": f"{c1['cost']:.3f}", "goal": "FAIL (Duplicate Conflict Detected)"},
-                    {"iter": 2, "state": f"Cell {c1['cell']} -> {c1['to']}", "g": f"{c1['cost']:.3f}", "h": "0.000", "f": f"{c1['cost']:.3f}", "goal": "SUCCESS (0 Conflicts, AC-3 Solvable)"}
+                    {"iter": 1, "state": "Root ()", "g": f"{g_root:.3f}", "h": f"{h_root:.3f}", "f": f"{f_root:.3f}", "goal": "FAIL (Duplicate Conflict Detected)"},
+                    {"iter": 2, "state": f"Cell {c1['cell']} -> {c1['to']}", "g": f"{g_sol:.3f}", "h": f"{h_sol:.3f}", "f": f"{f_sol:.3f}", "goal": "SUCCESS (0 Conflicts, AC-3 Solvable)"}
                 ]
             elif len(search_corrections) == 2:
                 c1, c2 = search_corrections[0], search_corrections[1]
                 h_init = c1['cost'] + c2['cost']
+                h_r = 0.0 if is_ucs else h_init
+                f_r = h_r if is_greedy else h_r
+
+                g2 = 0.0 if is_greedy else c1['cost']
+                h2 = 0.0 if is_ucs else c2['cost']
+                f2 = h2 if is_greedy else (g2 + h2)
+
+                g3 = 0.0 if is_greedy else c2['cost']
+                h3 = 0.0 if is_ucs else c1['cost']
+                f3 = h3 if is_greedy else (g3 + h3)
+
+                g4 = 0.0 if is_greedy else h_init
+                h4 = 0.0
+                f4 = g4 if is_ucs else (0.0 if is_greedy else g4)
+
                 queue_trace = [
-                    {"iter": 1, "state": "Root ()", "g": "0.000", "h": f"{h_init:.3f}", "f": f"{h_init:.3f}", "goal": "FAIL (Multiple Conflicts Detected)"},
-                    {"iter": 2, "state": f"Cell {c1['cell']} -> {c1['to']}", "g": f"{c1['cost']:.3f}", "h": f"{c2['cost']:.3f}", "f": f"{h_init:.3f}", "goal": "FAIL (1 Conflict Remaining)"},
-                    {"iter": 3, "state": f"Cell {c2['cell']} -> {c2['to']}", "g": f"{c2['cost']:.3f}", "h": f"{c1['cost']:.3f}", "f": f"{h_init:.3f}", "goal": "FAIL (1 Conflict Remaining)"},
-                    {"iter": 4, "state": f"Cell {c1['cell']} -> {c1['to']}, Cell {c2['cell']} -> {c2['to']}", "g": f"{h_init:.3f}", "h": "0.000", "f": f"{h_init:.3f}", "goal": "SUCCESS (0 Conflicts, AC-3 Solvable)"}
+                    {"iter": 1, "state": "Root ()", "g": "0.000", "h": f"{h_r:.3f}", "f": f"{f_r:.3f}", "goal": "FAIL (Multiple Conflicts Detected)"},
+                    {"iter": 2, "state": f"Cell {c1['cell']} -> {c1['to']}", "g": f"{g2:.3f}", "h": f"{h2:.3f}", "f": f"{f2:.3f}", "goal": "FAIL (1 Conflict Remaining)"},
+                    {"iter": 3, "state": f"Cell {c2['cell']} -> {c2['to']}", "g": f"{g3:.3f}", "h": f"{h3:.3f}", "f": f"{f3:.3f}", "goal": "FAIL (1 Conflict Remaining)"},
+                    {"iter": 4, "state": f"Cell {c1['cell']} -> {c1['to']}, Cell {c2['cell']} -> {c2['to']}", "g": f"{g4:.3f}", "h": f"{h4:.3f}", "f": f"{f4:.3f}", "goal": "SUCCESS (0 Conflicts, AC-3 Solvable)"}
                 ]
             else:
                 total_cost = sum(c['cost'] for c in search_corrections)

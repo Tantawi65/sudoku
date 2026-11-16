@@ -54,7 +54,6 @@
     button.btn-step { background: #15803d; color: white; border: none; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
     button.btn-run { background: var(--primary); color: white; border: none; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
     button.btn-reset { background: #e2e8f0; color: #334155; border: 1px solid var(--border-dark); font-weight: 600; cursor: pointer; }
-    button.btn-exp { background: #475569; color: white; border: none; font-weight: 600; cursor: pointer; width: 100%; }
     button:hover { opacity: 0.9; }
 
     /* Status Pill & Engine Connection */
@@ -120,15 +119,6 @@
     .alert-box { padding: 0.65rem; border-radius: 6px; margin-top: 0.65rem; font-size: 0.82rem; }
     .alert-box.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
     .alert-box.ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
-
-    /* Modal for Experiments */
-    .modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
-    .modal-bg.open { display: flex; }
-    .modal-card { background: white; border-radius: 8px; max-width: 950px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-    .modal-hdr { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1rem; }
-    .modal-hdr h2 { font-size: 1.2rem; font-weight: 700; }
-    .close-btn { font-size: 1.4rem; font-weight: 700; cursor: pointer; color: #64748b; }
-    .close-btn:hover { color: #0f172a; }
   </style>
 </head>
 <body>
@@ -178,9 +168,6 @@
         <button class="btn-step" id="btn-next" onclick="advanceStep()">Next Step &rarr;</button>
         <button class="btn-run"  onclick="runAllSteps()">Run All Steps</button>
         <button class="btn-reset" onclick="resetScenario()">Reset</button>
-      </div>
-      <div style="margin-top:0.4rem;">
-        <button class="btn-exp" onclick="openExpModal()">📊 View 3 Course Experiments</button>
       </div>
 
       <div class="status-bar">
@@ -319,51 +306,6 @@
   </div>
 </div>
 
-<!-- EXPERIMENTS MODAL -->
-<div class="modal-bg" id="exp-modal" onclick="closeExpModal(event)">
-  <div class="modal-card" onclick="event.stopPropagation()">
-    <div class="modal-hdr">
-      <div>
-        <h2>📊 Course Benchmark Experiments (Page 15)</h2>
-        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">
-          Aggregated across 5 random seeds (42, 101, 2024, 777, 999) &bull; Mean &plusmn; Std Dev
-        </div>
-      </div>
-      <span class="close-btn" onclick="closeExpModal()">&times;</span>
-    </div>
-
-    <div style="margin-bottom:1.25rem;">
-      <h3 style="font-size:0.95rem;color:#1e293b;margin-bottom:0.35rem;">Table 1: Experiment 1 &mdash; Search Comparison across 0–4 Misreads</h3>
-      <div style="overflow-x:auto;">
-        <table id="tbl-exp1">
-          <thead><tr><th>Algorithm</th><th>Misreads</th><th>Recovery Rate (%)</th><th>Nodes Expanded</th><th>Nodes Generated</th><th>Runtime (ms)</th></tr></thead>
-          <tbody><tr><td colspan="6" style="text-align:center;padding:1rem;">Loading live benchmark data...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div style="margin-bottom:1.25rem;">
-      <h3 style="font-size:0.95rem;color:#1e293b;margin-bottom:0.35rem;">Table 2: Experiment 2 &mdash; CSP Pruning Head-to-Head Comparison (BT alone vs BT + FC vs BT + FC + AC-3)</h3>
-      <div style="overflow-x:auto;">
-        <table id="tbl-exp2">
-          <thead><tr><th>Clues (Givens)</th><th>Algorithm</th><th>Assignments (Mean &plusmn; Std)</th><th>Backtracks (Mean &plusmn; Std)</th><th>Runtime (s)</th><th>Pruning Impact</th></tr></thead>
-          <tbody><tr><td colspan="6" style="text-align:center;padding:1rem;">Loading live benchmark data...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div style="margin-bottom:1rem;">
-      <h3 style="font-size:0.95rem;color:#1e293b;margin-bottom:0.35rem;">Table 3: Experiment 3 &mdash; Guidance Impact (NN-Guided vs Random Guidance vs No Correction)</h3>
-      <div style="overflow-x:auto;">
-        <table id="tbl-exp3">
-          <thead><tr><th>Guidance Strategy</th><th>Recovery Rate (%)</th><th>Nodes Expanded</th><th>Runtime (ms)</th><th>Scientific Outcome</th></tr></thead>
-          <tbody><tr><td colspan="5" style="text-align:center;padding:1rem;">Loading live benchmark data...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
   /* ================================================================
      APP STATE
@@ -395,7 +337,6 @@
   window.onload = async () => {
     initGrid();
     await loadScenario("1");
-    loadExperimentsModal();
   };
 
   /* ================================================================
@@ -409,7 +350,13 @@
 
   async function onToggleRandom(checked) {
     isRandomActive = checked;
+    const prevStep = currentStep;
     await loadScenario(document.getElementById("scenario-sel").value);
+    if (prevStep > 0) {
+      for (let s = 1; s <= prevStep; s++) {
+        runStep(s);
+      }
+    }
   }
 
   async function onScenarioChange(val) {
@@ -418,10 +365,12 @@
   }
 
   async function onConfigChange() {
-    const targetStep = currentStep;
+    const prevStep = currentStep;
     await loadScenario(document.getElementById("scenario-sel").value);
-    for (let s = 1; s <= targetStep; s++) {
-      runStep(s);
+    if (prevStep > 0) {
+      for (let s = 1; s <= prevStep; s++) {
+        runStep(s);
+      }
     }
   }
 
@@ -474,6 +423,14 @@
     gridState = liveData.initial_grid.map(row => [...row]);
     initialGivens = liveData.initial_grid.map(row => [...row]);
     renderBoard();
+
+    // Immediately update Stage 3 and Stage 4 labels so they reflect chosen config in real-time
+    if (liveData.search && liveData.search.algorithm) {
+      document.getElementById("s3-algo").textContent = liveData.search.algorithm;
+    }
+    if (liveData.csp && liveData.csp.mode) {
+      document.getElementById("s4-mode").textContent = liveData.csp.mode;
+    }
   }
 
   /* ================================================================
@@ -499,17 +456,17 @@
   ================================================================ */
   function advanceStep() {
     if (currentStep >= 4) return;
-    currentStep++;
-    runStep(currentStep);
+    runStep(currentStep + 1);
   }
 
   function runAllSteps() {
-    while (currentStep < 4) {
-      advanceStep();
+    for (let s = 1; s <= 4; s++) {
+      runStep(s);
     }
   }
 
   function runStep(s) {
+    currentStep = s;
     document.getElementById("progress-txt").textContent = `${s} / 4 Stages`;
 
     if (s === 1) {
@@ -738,114 +695,6 @@
   }
 
   /* ================================================================
-     EXPERIMENTS MODAL
-  ================================================================ */
-  function openExpModal() {
-    document.getElementById("exp-modal").classList.add("open");
-    loadExperimentsModal();
-  }
-
-  function closeExpModal(e) {
-    if (e && e.target !== document.getElementById("exp-modal") && !e.target.classList.contains("close-btn")) return;
-    document.getElementById("exp-modal").classList.remove("open");
-  }
-
-  async function loadExperimentsModal() {
-    try {
-      const res = await fetch(`/api/experiments?_t=${Date.now()}`);
-      if (!res.ok) return;
-      const data = await res.json();
-
-      // Table 1
-      const exp1 = data.experiment_1.summary;
-      let html1 = "";
-      const algos = ["AStar", "UCS", "Greedy"];
-      const algoLabels = { "AStar": "A* Search", "UCS": "UCS (Minimum Version)", "Greedy": "Greedy Best-First" };
-      for (const a of algos) {
-        for (let m = 0; m <= 4; m++) {
-          const st = exp1[a][m];
-          const recOk = st.recovery_rate_mean >= 1.0;
-          html1 += `
-            <tr>
-              <td><strong>${algoLabels[a]}</strong></td>
-              <td class="mono">${m}</td>
-              <td class="mono" style="font-weight:700;color:${recOk ? 'var(--ok)' : 'var(--warn)'};">${(st.recovery_rate_mean*100).toFixed(1)}%</td>
-              <td class="mono">${st.nodes_expanded_mean.toFixed(2)} &plusmn; ${st.nodes_expanded_std.toFixed(2)}</td>
-              <td class="mono">${st.nodes_generated_mean.toFixed(2)} &plusmn; ${st.nodes_generated_std.toFixed(2)}</td>
-              <td class="mono">${(st.time_mean*1000).toFixed(2)} ms</td>
-            </tr>
-          `;
-        }
-      }
-      document.querySelector("#tbl-exp1 tbody").innerHTML = html1;
-
-      // Table 2 (Explicit labels: BT alone, BT + FC, BT + FC + AC-3)
-      const exp2 = data.experiment_2.summary;
-      const givens = [25, 30, 35];
-      const modes = [
-        ["BT", "BT alone (Pure Backtracking Baseline)"],
-        ["FC", "BT + FC (Forward Checking + MRV)"],
-        ["AC3", "BT + FC + AC-3 (AC-3 Pre-check + FC)"]
-      ];
-      const givenLabels = {
-        25: "25 Givens (Sparse / Hard)",
-        30: "30 Givens (Medium Benchmark)",
-        35: "35 Givens (Dense / Easy)"
-      };
-
-      let html2 = "";
-      for (const g of givens) {
-        const bt_backtracks = exp2["BT"][g].backtracks_mean;
-        for (let i = 0; i < modes.length; i++) {
-          const [modeKey, modeTitle] = modes[i];
-          const st = exp2[modeKey][g];
-          const isBT = modeKey === "BT";
-          const isHigh = st.backtracks_mean > 500;
-          let impactText = '<span style="color:var(--text-muted);">baseline (1&times;)</span>';
-          if (!isBT) {
-            const factor = bt_backtracks / Math.max(st.backtracks_mean, 0.001);
-            impactText = `<strong style="color:var(--ok);">${factor.toFixed(1)}&times; fewer backtracks</strong>`;
-          }
-          html2 += `
-            <tr>
-              ${i === 0 ? `<td rowspan="3" style="font-weight:700;vertical-align:middle;background:#f8fafc;border-right:1px solid var(--border);">${givenLabels[g]}</td>` : ''}
-              <td><strong>${modeTitle}</strong></td>
-              <td class="mono">${st.assignments_mean.toFixed(1)} &plusmn; ${st.assignments_std.toFixed(1)}</td>
-              <td class="mono" style="font-weight:700;color:${isHigh ? 'var(--warn)' : 'var(--ok)'};">${st.backtracks_mean.toFixed(1)} &plusmn; ${st.backtracks_std.toFixed(1)}</td>
-              <td class="mono">${st.time_mean.toFixed(4)} s</td>
-              <td>${impactText}</td>
-            </tr>
-          `;
-        }
-      }
-      document.querySelector("#tbl-exp2 tbody").innerHTML = html2;
-
-      // Table 3
-      const exp3 = data.experiment_3.summary;
-      const strats = [
-        ["NN_Guided", "NN-Guided (A*)", "<span class='badge ok'>100% Solved</span> Calibrated probabilities guide search to fix in 3.4 nodes"],
-        ["Random_Correction", "Random Guidance (Flat Probs)", "<span class='badge err'>20% Solved</span> Blind search exhausts 676.8 nodes and times out 80% of time"],
-        ["No_Correction", "No Correction (Direct CSP)", "<span class='badge err'>0% Solved</span> Contradictions remain uncorrected; CSP domain collapses immediately"]
-      ];
-      let html3 = "";
-      for (const [key, label, takeaway] of strats) {
-        const st = exp3[key];
-        const isOk = st.recovery_rate_mean >= 1.0;
-        html3 += `
-          <tr>
-            <td><strong>${label}</strong></td>
-            <td class="mono" style="font-weight:700;color:${isOk ? 'var(--ok)' : 'var(--warn)'};">${(st.recovery_rate_mean*100).toFixed(1)}%</td>
-            <td class="mono">${st.nodes_expanded_mean.toFixed(2)} &plusmn; ${st.nodes_expanded_std.toFixed(2)}</td>
-            <td class="mono">${(st.time_mean*1000).toFixed(2)} ms</td>
-            <td>${takeaway}</td>
-          </tr>
-        `;
-      }
-      document.querySelector("#tbl-exp3 tbody").innerHTML = html3;
-    } catch(err) {}
-  }
-
-  /* ================================================================
      OFFLINE FALLBACK DATA
   ================================================================ */
   function buildFallbackData(id, algo, cspMode, isRandom) {
@@ -879,8 +728,22 @@
     let puz = (id === "4" ? benchPuz : basePuz).map(r => [...r]);
     let sol = (id === "4" ? benchSol : baseSol).map(r => [...r]);
 
-    if (id === "1") puz[0][0] = 6;
-    if (id === "2") { puz[0][0] = 6; puz[0][4] = 9; }
+    // If randomized, permute digits 1-9 to produce a completely different valid puzzle
+    if (isRandom) {
+      const shift = 3;
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (puz[r][c] !== 0) puz[r][c] = ((puz[r][c] - 1 + shift) % 9) + 1;
+          if (sol[r][c] !== 0) sol[r][c] = ((sol[r][c] - 1 + shift) % 9) + 1;
+        }
+      }
+    }
+
+    if (id === "1") puz[0][0] = puz[1][0] || 6;
+    if (id === "2") { 
+      puz[0][0] = puz[1][0] || 6; 
+      puz[0][4] = puz[1][4] || 9; 
+    }
 
     const inferences = {};
     for (let r = 0; r < 9; r++) {
@@ -888,7 +751,7 @@
         const v = puz[r][c];
         if (v === 0) continue;
         const isAmb = (id === "1" && r===0 && c===0) || (id === "2" && ((r===0&&c===0)||(r===0&&c===4)));
-        const alt = (r===0 && c===0) ? 5 : ((r===0 && c===4) ? 7 : (v % 9 + 1));
+        const alt = sol[r][c];
         const probs = {};
         for (let d = 1; d <= 9; d++) probs[d] = 0.002;
         if (isAmb) {
@@ -910,6 +773,30 @@
     }
 
     const hasMisreads = id === "1" || id === "2";
+    const isUcs = algo.toLowerCase() === "ucs";
+    const isGreedy = algo.toLowerCase() === "greedy";
+    const algoName = isUcs ? "UCS (Uniform Cost Search)" : (isGreedy ? "Greedy Best-First Search" : "A* Search");
+    const nodes = hasMisreads ? (isUcs ? 4 : (isGreedy ? 2 : 2)) : 0;
+
+    const qTrace = [];
+    if (hasMisreads) {
+      const cCost = 0.071;
+      const h_r = isUcs ? "0.000" : cCost.toFixed(3);
+      const g_r = "0.000";
+      const f_r = isGreedy ? h_r : (isUcs ? g_r : (parseFloat(g_r)+parseFloat(h_r)).toFixed(3));
+      qTrace.push({iter:1, state:"Root ()", g:g_r, h:h_r, f:f_r, goal:"FAIL (Conflict)"});
+
+      const g_s = isGreedy ? "0.000" : cCost.toFixed(3);
+      const h_s = "0.000";
+      const f_s = isUcs ? g_s : (isGreedy ? h_s : (parseFloat(g_s)+parseFloat(h_s)).toFixed(3));
+      qTrace.push({iter:2, state:`Cell (0,0) -> ${sol[0][0]}`, g:g_s, h:h_s, f:f_s, goal:"SUCCESS (0 Conflicts)"});
+    }
+
+    const cspLbl = cspMode === "BT" ? "BT alone (Pure Backtracking)" : (cspMode === "AC3" ? "BT + FC + AC-3 (AC-3 Pre-check + FC)" : "BT + FC (Forward Checking + MRV)");
+    const assign = cspMode === "BT" ? (id === "4" ? 27216 : 1324) : (cspMode === "AC3" ? (id === "4" ? 145 : 61) : (id === "4" ? 151 : 84));
+    const bt = cspMode === "BT" ? (id === "4" ? 27160 : 1273) : (id === "4" ? 95 : 33);
+    const cspTime = cspMode === "BT" ? 560.1 : (cspMode === "AC3" ? 36.6 : 5.0);
+
     liveData = {
       scenario_id: id,
       initial_grid: puz,
@@ -918,23 +805,20 @@
         is_consistent: !hasMisreads,
         arcs_tested: 810,
         values_pruned: hasMisreads ? 2 : 0,
-        conflicts: hasMisreads ? [{digit: 6, cell1: [0,0], cell2: [1,0]}] : []
+        conflicts: hasMisreads ? [{digit: puz[0][0], cell1: [0,0], cell2: [1,0]}] : []
       },
       search: {
-        algorithm: algo === "astar" ? "A* Search" : (algo === "greedy" ? "Greedy" : "UCS"),
-        nodes_expanded: hasMisreads ? (algo === "ucs" ? 4 : 2) : 0,
+        algorithm: algoName,
+        nodes_expanded: nodes,
         elapsed_time_ms: 28.5,
-        corrections: hasMisreads ? [{cell: [0,0], from: 6, to: 5, cost: 0.0712}] : [],
-        queue_trace: hasMisreads ? [
-          {iter:1, state:"Root ()", g:"0.000", h:"0.071", f:"0.071", goal:"FAIL (Conflict)"},
-          {iter:2, state:"Cell (0,0) -> 5", g:"0.071", h:"0.000", f:"0.071", goal:"SUCCESS (0 Conflicts)"}
-        ] : []
+        corrections: hasMisreads ? [{cell: [0,0], from: puz[0][0], to: sol[0][0], cost: 0.0712}] : [],
+        queue_trace: qTrace
       },
       csp: {
-        mode: cspMode === "BT" ? "BT alone (Pure Backtracking)" : (cspMode === "AC3" ? "BT + FC + AC-3" : "BT + FC (Forward Checking + MRV)"),
-        assignments: cspMode === "BT" ? (id === "4" ? 2258 : 4208) : (id === "4" ? 99 : 51),
-        backtracks: cspMode === "BT" ? (id === "4" ? 2202 : 4157) : (id === "4" ? 43 : 0),
-        elapsed_time_ms: cspMode === "BT" ? 46.3 : 3.5,
+        mode: cspLbl,
+        assignments: assign,
+        backtracks: bt,
+        elapsed_time_ms: cspTime,
         solved_grid: sol
       }
     };
