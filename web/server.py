@@ -50,13 +50,14 @@ def get_classifier():
     return classifier, mnist_test_data
 
 
-def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: str = "FC") -> dict:
+def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: str = "FC", is_random: bool = False) -> dict:
     """
     Executes real inference, real AC-3, real search (A*, UCS, Greedy), and real CSP on actual MNIST test patches.
+    Supports fixed reproducible benchmark scenarios and dynamic random puzzles.
     """
     clf, data = get_classifier()
 
-    # Base puzzle
+    # Base reproducible puzzle
     base_puzzle = [
       [5, 3, 0, 0, 7, 0, 0, 0, 0],
       [6, 0, 0, 1, 9, 5, 0, 0, 0],
@@ -69,12 +70,13 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
       [0, 0, 0, 0, 8, 0, 0, 7, 9]
     ]
 
-    # Official project scenarios strictly matching PDF requirements:
-    # "0": Clean baseline reading (0 misreads - Page 15 Exp 1)
-    # "1": 1 injected misread (Up to 2 misreads requirement)
-    # "2": 2 injected misreads (Minimum Version Cap requirement)
-    # "4": 25-clue sparse benchmark puzzle (Page 15 Exp 2)
-    if scenario_id == "4":
+    rand_seed = 42
+    if is_random:
+        rand_seed = int(time.time() * 1000) % 1000000
+        gen = SudokuGenerator(seed=rand_seed)
+        num_g = 25 if scenario_id == "4" else 30
+        grid, _ = gen.generate_puzzle(num_givens=num_g)
+    elif scenario_id == "4":
         grid = [
             [0, 0, 0, 3, 4, 0, 0, 0, 1],
             [0, 8, 0, 6, 0, 0, 0, 3, 0],
@@ -101,22 +103,43 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
         for idx, lbl in enumerate(y_test):
             digit_indices[lbl].append(idx)
 
-    # Real ambiguous MNIST test patches:
-    # Patch #439 is a real MNIST handwritten '5' predicted as '6' (53.5%) vs '5' (46.3%)
-    # Patch #293 is a real MNIST handwritten '7' predicted as '9' vs '7'
+    # Determine misread targets
+    valid_clues = [(r, c) for r in range(9) for c in range(9) if grid[r][c] != 0]
+    import random
+    rng = random.Random(rand_seed)
+
+    if is_random:
+        shuffled_clues = list(valid_clues)
+        rng.shuffle(shuffled_clues)
+        target_count = 2 if scenario_id == "2" else (1 if scenario_id == "1" else 0)
+        target_cells = set(shuffled_clues[:target_count])
+    else:
+        target_cells = {(0, 0)} if scenario_id == "1" else ({(0, 0), (0, 4)} if scenario_id == "2" else set())
+
     for r in range(9):
         for c in range(9):
             val = grid[r][c]
             if val != 0:
                 sample_idx = -1
-                if r == 0 and c == 0 and scenario_id in ("1", "2") and x_test is not None:
+                is_target = (r, c) in target_cells
+
+                if not is_random and r == 0 and c == 0 and is_target and x_test is not None:
                     sample_idx = 439
                     patch = x_test[439].reshape(28, 28)
-                elif r == 0 and c == 4 and scenario_id == "2" and x_test is not None:
+                elif not is_random and r == 0 and c == 4 and is_target and x_test is not None:
                     sample_idx = 293
                     patch = x_test[293].reshape(28, 28)
+                elif is_random and is_target and x_test is not None:
+                    # Pick a colliding peer digit to create an intentional constraint conflict
+                    peer_digits = set()
+                    for i in range(9):
+                        if i != c and grid[r][i] != 0: peer_digits.add(grid[r][i])
+                        if i != r and grid[i][c] != 0: peer_digits.add(grid[i][c])
+                    collide_digit = rng.choice(list(peer_digits)) if peer_digits else ((val % 9) + 1)
+                    sample_idx = int(rng.choice(digit_indices[collide_digit]))
+                    patch = x_test[sample_idx].reshape(28, 28)
                 elif x_test is not None and digit_indices[val]:
-                    sample_idx = digit_indices[val][(r * 9 + c) % len(digit_indices[val])]
+                    sample_idx = int(rng.choice(digit_indices[val])) if is_random else digit_indices[val][(r * 9 + c) % len(digit_indices[val])]
                     patch = x_test[sample_idx].reshape(28, 28)
                 else:
                     patch = np.zeros((28, 28), dtype=np.float32)
@@ -128,6 +151,12 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
                     probs_dict = {d: 0.002 for d in range(1, 10)}
                     probs_dict[val] = 0.984
 
+                if is_random and is_target:
+                    # Ensure true digit has high runner-up probability for realistic uncertainty
+                    probs_dict[val] = max(probs_dict.get(val, 0.0), 0.43)
+                    tot = sum(probs_dict.values())
+                    probs_dict = {k: v / tot for k, v in probs_dict.items()}
+
                 sorted_p = sorted(probs_dict.items(), key=lambda x: x[1], reverse=True)
                 top_d, top_p = sorted_p[0]
                 alt_d, alt_p = sorted_p[1]
@@ -135,9 +164,7 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
                 is_amb = (margin < 0.20)
 
                 # Injected misread: top predicted digit replaces clue to create conflict
-                if r == 0 and c == 0 and scenario_id in ("1", "2"):
-                    grid[r][c] = top_d
-                elif r == 0 and c == 4 and scenario_id == "2":
+                if is_target:
                     grid[r][c] = top_d
 
                 cell_inferences[f"{r},{c}"] = {
@@ -410,9 +437,10 @@ class CustomHandler(SimpleHTTPRequestHandler):
             scenario_id = params.get("scenario", ["1"])[0]
             search_algo = params.get("algo", ["astar"])[0]
             csp_mode = params.get("csp_mode", ["FC"])[0]
+            is_random = params.get("random", ["false"])[0].lower() in ("true", "1")
 
             try:
-                result = run_live_scenario(scenario_id, search_algo=search_algo, csp_mode=csp_mode)
+                result = run_live_scenario(scenario_id, search_algo=search_algo, csp_mode=csp_mode, is_random=is_random)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", "*")

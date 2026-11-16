@@ -529,6 +529,10 @@
         <button class="btn btn-step"  onclick="advanceStep()">Next Step &rarr;</button>
         <button class="btn btn-run"   onclick="runAll()">Run All</button>
         <button class="btn btn-reset" onclick="resetScenario()">Reset</button>
+        <label style="margin-left:.4rem;display:inline-flex;align-items:center;gap:.35rem;font-size:.82rem;font-weight:600;cursor:pointer;background:var(--bg-alt);padding:4px 8px;border-radius:4px;border:1px solid var(--border);" title="When checked: generates a new random puzzle on fetch. When unchecked: keeps standard benchmark puzzle.">
+          <input type="checkbox" id="random-toggle" onchange="onToggleRandom(this.checked)" style="cursor:pointer;accent-color:#5a3a7e;">
+          🎲 Randomize Puzzle
+        </label>
       </div>
 
       <div class="controls" style="margin-bottom:.6rem;flex-wrap:wrap;gap:.4rem;">
@@ -968,10 +972,11 @@
 
     const algo = document.getElementById("algo-sel") ? document.getElementById("algo-sel").value : "astar";
     const cspMode = document.getElementById("csp-sel") ? document.getElementById("csp-sel").value : "FC";
+    const isRandom = document.getElementById("random-toggle") ? document.getElementById("random-toggle").checked : false;
 
     try {
       const timestamp = Date.now();
-      const r = await fetch(`/api/solve?scenario=${id}&algo=${algo}&csp_mode=${cspMode}&_t=${timestamp}`);
+      const r = await fetch(`/api/solve?scenario=${id}&algo=${algo}&csp_mode=${cspMode}&random=${isRandom}&_t=${timestamp}`);
       if (r.ok) {
         liveData = await r.json();
         chip.textContent = "Engine: live Python server (port 8000)";
@@ -1123,6 +1128,11 @@
   }
 
   async function resetScenario() {
+    const sc = document.getElementById("scenario-sel").value;
+    await loadScenario(sc);
+  }
+
+  async function onToggleRandom(checked) {
     const sc = document.getElementById("scenario-sel").value;
     await loadScenario(sc);
   }

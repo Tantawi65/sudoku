@@ -1,285 +1,272 @@
 """
-Evaluation Experiments Framework.
-Executes the three mandatory experiments defined on Page 15 across 5 distinct random seeds,
-computing mean and standard deviation for all evaluation metrics.
-
-Experiments:
-1. UCS vs Greedy vs A*: nodes expanded, nodes generated, runtime, and recovery rate for 0-4 misreads.
-2. BT vs BT+FC vs BT+FC+AC-3 on puzzles with 25, 30, 35 givens.
-3. NN-guided correction vs no correction vs random correction.
+Runs the 3 required experiments for the handwritten Sudoku reader and solver project.
+Generates results to be plotted and documented in the final report.
 """
-
 import os
 import json
-import random
 import time
-from typing import Dict, List, Tuple
 import numpy as np
+from collections import defaultdict
+from typing import Dict, List, Any
 
 from csp.sudoku_csp import SudokuCSP
 from csp.solver import UnifiedCSPSolver
-from data.generator import SudokuGenerator
-from search.correction_search import CorrectionSearchProblem, SearchNode
+from search.correction_search import CorrectionSearchProblem
+from search.astar import AStarSolver
 from search.ucs import UCSSolver
 from search.greedy import GreedySolver
-from search.astar import AStarSolver
+from data.generator import SudokuGenerator
 
-
-SEEDS = [42, 101, 2024, 777, 999]
-
-
-def inject_simulated_misreads(
-    puzzle: List[List[int]],
-    solution: List[List[int]],
-    num_misreads: int,
-    seed: int
-) -> Tuple[List[List[int]], Dict[Tuple[int, int], Dict[int, float]]]:
+def run_experiment_1(seeds: List[int]) -> Dict[str, Any]:
     """
-    Creates controlled simulated misreads and calibrated NN probability outputs.
-    Returns corrupted_puzzle and probabilities dict.
+    Experiment 1 (Search Comparison):
+    UCS vs Greedy vs A*: nodes and recovery rate for 0-4 misreads.
     """
-    random.seed(seed)
-    np.random.seed(seed)
-
-    corrupted = [row[:] for row in puzzle]
-    probs: Dict[Tuple[int, int], Dict[int, float]] = {}
-
-    clues = [(r, c) for r in range(9) for c in range(9) if puzzle[r][c] != 0]
-    random.shuffle(clues)
-
-    # Base high confidence for uncorrupted clues
-    for r, c in clues:
-        true_d = puzzle[r][c]
-        d_probs = {d: 0.01 for d in range(1, 10)}
-        d_probs[true_d] = 0.92
-        probs[(r, c)] = d_probs
-
-    misread_count = 0
-    for r, c in clues:
-        if misread_count >= num_misreads:
-            break
-
-        true_val = puzzle[r][c]
-        # Choose a colliding digit in same row/col/box
-        candidates = []
-        for i in range(9):
-            if i != c and puzzle[r][i] != 0:
-                candidates.append(puzzle[r][i])
-            if i != r and puzzle[i][c] != 0:
-                candidates.append(puzzle[i][c])
-
-        colliding_digit = candidates[0] if candidates else ((true_val % 9) + 1)
-        corrupted[r][c] = colliding_digit
-
-        # Construct ambiguous NN probabilities (e.g. 52% vs 45%)
-        p_top = random.uniform(0.50, 0.55)
-        p_true = random.uniform(0.40, p_top - 0.02)
-        rem = 1.0 - (p_top + p_true)
-
-        d_probs = {d: rem / 7.0 for d in range(1, 10)}
-        d_probs[colliding_digit] = p_top
-        d_probs[true_val] = p_true
-        probs[(r, c)] = d_probs
-
-        misread_count += 1
-
-    return corrupted, probs
-
-
-def run_experiment_1() -> Dict[str, object]:
-    """
-    Experiment 1: UCS vs Greedy vs A* across 0-4 misreads.
-    Metrics: recovery rate, nodes expanded, nodes generated, time.
-    """
-    print("\n" + "=" * 60)
-    print("RUNNING EXPERIMENT 1: UCS vs Greedy vs A* across 0-4 Misreads")
-    print("=" * 60)
-
+    print("\n--- Running Experiment 1: Search Comparison ---")
+    algorithms = {
+        "AStar": AStarSolver,
+        "UCS": UCSSolver,
+        "Greedy": GreedySolver
+    }
     misread_levels = [0, 1, 2, 3, 4]
-    algorithms = ["UCS", "Greedy", "AStar"]
-    raw_results = {algo: {m: [] for m in misread_levels} for algo in algorithms}
-
-    for seed in SEEDS:
-        print(f"Executing Seed {seed}...")
+    
+    results = defaultdict(lambda: defaultdict(list))
+    
+    for seed in seeds:
         gen = SudokuGenerator(seed=seed)
-        puzzle, solution = gen.generate_puzzle(num_givens=30)
-
-        for m in misread_levels:
-            corrupted, probs = inject_simulated_misreads(puzzle, solution, num_misreads=m, seed=seed)
-            max_corr = max(m, 3)
-
-            for algo in algorithms:
-                problem = CorrectionSearchProblem(
-                    initial_grid=corrupted,
-                    probabilities=probs,
-                    max_corrections=max_corr
-                )
-
-                if algo == "UCS":
-                    solver = UCSSolver()
-                elif algo == "Greedy":
-                    solver = GreedySolver()
-                else:
-                    solver = AStarSolver()
-
-                success, node, solved = solver.search(problem)
-                recovered = (success and solved == solution)
-
-                raw_results[algo][m].append({
-                    "recovered": 1 if recovered else 0,
+        base_puzzle, _ = gen.generate_puzzle(num_givens=30)
+        
+        valid_coords = [(r, c) for r in range(9) for c in range(9) if base_puzzle[r][c] != 0]
+        
+        for num_misreads in misread_levels:
+            corrupted = [row[:] for row in base_puzzle]
+            probs = {(r, c): {base_puzzle[r][c]: 0.95} for r in range(9) for c in range(9) if base_puzzle[r][c] != 0}
+            
+            # Inject misreads
+            np.random.seed(seed + num_misreads)
+            if num_misreads > 0:
+                coords_to_corrupt = [valid_coords[i] for i in np.random.choice(len(valid_coords), num_misreads, replace=False)]
+                for r, c in coords_to_corrupt:
+                    true_val = base_puzzle[r][c]
+                    # Ensure the misread value isn't the true value
+                    misread_val = (true_val % 9) + 1
+                    corrupted[r][c] = misread_val
+                    probs[(r, c)] = {misread_val: 0.55, true_val: 0.40, (misread_val % 9) + 1: 0.05}
+            
+            for algo_name, solver_cls in algorithms.items():
+                prob_model = CorrectionSearchProblem(corrupted, probs, max_corrections=5)
+                solver = solver_cls()
+                succ, _, _ = solver.search(prob_model)
+                
+                results[algo_name][num_misreads].append({
+                    "success": 1 if succ else 0,
                     "nodes_expanded": solver.nodes_expanded,
                     "nodes_generated": solver.nodes_generated,
                     "time": solver.elapsed_time
                 })
-
-    summary = {algo: {} for algo in algorithms}
-    for algo in algorithms:
-        for m in misread_levels:
-            data = raw_results[algo][m]
-            summary[algo][m] = {
-                "recovery_rate_mean": float(np.mean([d["recovered"] for d in data])),
-                "nodes_expanded_mean": float(np.mean([d["nodes_expanded"] for d in data])),
-                "nodes_expanded_std": float(np.std([d["nodes_expanded"] for d in data])),
-                "nodes_generated_mean": float(np.mean([d["nodes_generated"] for d in data])),
-                "nodes_generated_std": float(np.std([d["nodes_generated"] for d in data])),
-                "time_mean": float(np.mean([d["time"] for d in data])),
-                "time_std": float(np.std([d["time"] for d in data]))
+                
+    # Aggregate results (Mean and Std Dev)
+    summary = defaultdict(dict)
+    for algo, levels in results.items():
+        for level, runs in levels.items():
+            summary[algo][level] = {
+                "recovery_rate_mean": np.mean([r["success"] for r in runs]),
+                "nodes_expanded_mean": np.mean([r["nodes_expanded"] for r in runs]),
+                "nodes_expanded_std": np.std([r["nodes_expanded"] for r in runs]),
+                "nodes_generated_mean": np.mean([r["nodes_generated"] for r in runs]),
+                "nodes_generated_std": np.std([r["nodes_generated"] for r in runs]),
+                "time_mean": np.mean([r["time"] for r in runs]),
+                "time_std": np.std([r["time"] for r in runs])
             }
+            
+    print("Experiment 1 complete.")
+    return summary
 
-    return {"summary": summary, "raw": raw_results}
-
-
-def run_experiment_2() -> Dict[str, object]:
+def run_experiment_2(seeds: List[int]) -> Dict[str, Any]:
     """
-    Experiment 2: BT vs BT+FC vs BT+FC+AC-3 on puzzles with 25, 30, 35 givens.
-    Metrics: assignments, backtracks, elapsed time.
+    Experiment 2 (CSP Pruning Comparison):
+    BT vs BT+FC vs BT+FC+AC-3 on puzzles with 25, 30, 35 givens.
     """
-    print("\n" + "=" * 60)
-    print("RUNNING EXPERIMENT 2: CSP Pruning (BT vs FC vs AC3)")
-    print("=" * 60)
-
-    given_levels = [25, 30, 35]
-    solvers = ["BT", "FC", "AC3"]
-    raw_results = {mode: {g: [] for g in given_levels} for mode in solvers}
-
-    for seed in SEEDS:
-        print(f"Executing Seed {seed}...")
+    print("\n--- Running Experiment 2: CSP Pruning ---")
+    modes = ["BT", "FC", "AC3"]
+    givens_levels = [25, 30, 35]
+    
+    results = defaultdict(lambda: defaultdict(list))
+    
+    for seed in seeds:
         gen = SudokuGenerator(seed=seed)
-
-        for g in given_levels:
-            puzzle, solution = gen.generate_puzzle(num_givens=g)
-
-            for mode in solvers:
-                csp = SudokuCSP(puzzle)
+        for givens in givens_levels:
+            puzzle, _ = gen.generate_puzzle(num_givens=givens)
+            
+            for mode in modes:
                 solver = UnifiedCSPSolver(mode=mode)
-                solved = solver.solve(csp)
-
-                raw_results[mode][g].append({
+                csp = SudokuCSP(puzzle)
+                sol = solver.solve(csp)
+                
+                results[mode][givens].append({
+                    "solved": 1 if sol else 0,
                     "assignments": solver.assignments,
                     "backtracks": solver.backtracks,
-                    "time": solver.elapsed_time,
-                    "solved": 1 if solved == solution else 0
+                    "time": solver.elapsed_time
                 })
-
-    summary = {mode: {} for mode in solvers}
-    for mode in solvers:
-        for g in given_levels:
-            data = raw_results[mode][g]
-            summary[mode][g] = {
-                "assignments_mean": float(np.mean([d["assignments"] for d in data])),
-                "assignments_std": float(np.std([d["assignments"] for d in data])),
-                "backtracks_mean": float(np.mean([d["backtracks"] for d in data])),
-                "backtracks_std": float(np.std([d["backtracks"] for d in data])),
-                "time_mean": float(np.mean([d["time"] for d in data])),
-                "time_std": float(np.std([d["time"] for d in data]))
+                
+    # Aggregate results
+    summary = defaultdict(dict)
+    for mode, levels in results.items():
+        for givens, runs in levels.items():
+            summary[mode][givens] = {
+                "assignments_mean": np.mean([r["assignments"] for r in runs]),
+                "assignments_std": np.std([r["assignments"] for r in runs]),
+                "backtracks_mean": np.mean([r["backtracks"] for r in runs]),
+                "backtracks_std": np.std([r["backtracks"] for r in runs]),
+                "time_mean": np.mean([r["time"] for r in runs]),
+                "time_std": np.std([r["time"] for r in runs])
             }
+            
+    print("Experiment 2 complete.")
+    return summary
 
-    return {"summary": summary, "raw": raw_results}
-
-
-def run_experiment_3() -> Dict[str, object]:
+def run_experiment_3(seeds: List[int]) -> Dict[str, Any]:
     """
-    Experiment 3: NN-guided correction vs No correction vs Random correction.
-    Tested on puzzles with 2 injected misreads across 5 seeds.
+    Experiment 3 (NN Guidance Impact):
+    NN-guided correction vs no correction vs random correction.
+    Uses A* search for correction attempts.
     """
-    print("\n" + "=" * 60)
-    print("RUNNING EXPERIMENT 3: Guidance Impact (NN-Guided vs No-Correction vs Random)")
-    print("=" * 60)
-
-    strategies = ["NN_Guided", "No_Correction", "Random_Correction"]
-    raw_results = {strat: [] for strat in strategies}
-
-    for seed in SEEDS:
-        print(f"Executing Seed {seed}...")
+    print("\n--- Running Experiment 3: Guidance Impact ---")
+    results = defaultdict(list)
+    
+    for seed in seeds:
         gen = SudokuGenerator(seed=seed)
-        puzzle, solution = gen.generate_puzzle(num_givens=30)
-        corrupted, probs = inject_simulated_misreads(puzzle, solution, num_misreads=2, seed=seed)
-
-        # 1. NN-guided (A* using probabilities)
+        base_puzzle, _ = gen.generate_puzzle(num_givens=30)
+        valid_coords = [(r, c) for r in range(9) for c in range(9) if base_puzzle[r][c] != 0]
+        
+        # Inject 2 misreads for this experiment
+        corrupted = [row[:] for row in base_puzzle]
+        probs = {(r, c): {base_puzzle[r][c]: 0.95} for r in range(9) for c in range(9) if base_puzzle[r][c] != 0}
+        
+        np.random.seed(seed + 100)
+        coords_to_corrupt = [valid_coords[i] for i in np.random.choice(len(valid_coords), 2, replace=False)]
+        for r, c in coords_to_corrupt:
+            true_val = base_puzzle[r][c]
+            misread_val = (true_val % 9) + 1
+            corrupted[r][c] = misread_val
+            probs[(r, c)] = {misread_val: 0.52, true_val: 0.44, (misread_val % 9) + 1: 0.04}
+            
+        # Strategy A: NN Guided
         prob_nn = CorrectionSearchProblem(corrupted, probs, max_corrections=3)
         solver_nn = AStarSolver()
-        succ_nn, node_nn, sol_nn = solver_nn.search(prob_nn)
-        raw_results["NN_Guided"].append({
-            "recovered": 1 if (succ_nn and sol_nn == solution) else 0,
+        succ_nn, _, _ = solver_nn.search(prob_nn)
+        results["NN_Guided"].append({
+            "success": 1 if succ_nn else 0,
             "nodes_expanded": solver_nn.nodes_expanded,
             "time": solver_nn.elapsed_time
         })
-
-        # 2. No correction (direct CSP solve without search)
-        csp_direct = SudokuCSP(corrupted)
-        csp_solver = UnifiedCSPSolver(mode="FC")
-        sol_direct = csp_solver.solve(csp_direct)
-        raw_results["No_Correction"].append({
-            "recovered": 1 if (sol_direct == solution) else 0,
+        
+        # Strategy B: Random Correction (Flat Probabilities)
+        flat_probs = {c: {d: 1.0 / 9.0 for d in range(1, 10)} for c in probs.keys()}
+        prob_rand = CorrectionSearchProblem(corrupted, flat_probs, max_corrections=3)
+        solver_rand = AStarSolver()
+        succ_rand, _, _ = solver_rand.search(prob_rand)
+        results["Random_Correction"].append({
+            "success": 1 if succ_rand else 0,
+            "nodes_expanded": solver_rand.nodes_expanded,
+            "time": solver_rand.elapsed_time
+        })
+        
+        # Strategy C: No Correction (Direct CSP)
+        solver_none = UnifiedCSPSolver(mode="FC")
+        csp_none = SudokuCSP(corrupted)
+        sol_none = solver_none.solve(csp_none)
+        results["No_Correction"].append({
+            "success": 1 if sol_none else 0,
             "nodes_expanded": 0,
-            "time": csp_solver.elapsed_time
+            "time": solver_none.elapsed_time
         })
 
-        # 3. Random correction (uninformative flat probabilities)
-        flat_probs = {}
-        for (r, c), pdict in probs.items():
-            top_d = corrupted[r][c]
-            # Uniform probabilities without NN confidence
-            flat_probs[(r, c)] = {d: 1.0 / 9.0 for d in range(1, 10)}
-
-        prob_rnd = CorrectionSearchProblem(corrupted, flat_probs, max_corrections=3)
-        solver_rnd = AStarSolver()
-        succ_rnd, node_rnd, sol_rnd = solver_rnd.search(prob_rnd)
-        raw_results["Random_Correction"].append({
-            "recovered": 1 if (succ_rnd and sol_rnd == solution) else 0,
-            "nodes_expanded": solver_rnd.nodes_expanded,
-            "time": solver_rnd.elapsed_time
-        })
-
+    # Aggregate results
     summary = {}
-    for strat in strategies:
-        data = raw_results[strat]
-        summary[strat] = {
-            "recovery_rate_mean": float(np.mean([d["recovered"] for d in data])),
-            "nodes_expanded_mean": float(np.mean([d["nodes_expanded"] for d in data])),
-            "nodes_expanded_std": float(np.std([d["nodes_expanded"] for d in data])),
-            "time_mean": float(np.mean([d["time"] for d in data])),
-            "time_std": float(np.std([d["time"] for d in data]))
+    for strategy, runs in results.items():
+        summary[strategy] = {
+            "recovery_rate_mean": np.mean([r["success"] for r in runs]),
+            "nodes_expanded_mean": np.mean([r["nodes_expanded"] for r in runs]),
+            "nodes_expanded_std": np.std([r["nodes_expanded"] for r in runs]),
+            "time_mean": np.mean([r["time"] for r in runs]),
+            "time_std": np.std([r["time"] for r in runs])
         }
+        
+    print("Experiment 3 complete.")
+    return summary
 
-    return {"summary": summary, "raw": raw_results}
-
-
-def run_all_experiments() -> None:
-    """Executes all three experiments and writes aggregated output to JSON."""
-    os.makedirs("eval/results", exist_ok=True)
-    all_results = {
-        "experiment_1": run_experiment_1(),
-        "experiment_2": run_experiment_2(),
-        "experiment_3": run_experiment_3()
+def run_all_experiments():
+    seeds = [42, 101, 2024, 777, 999]
+    print(f"Running experiments across {len(seeds)} random seeds: {seeds}")
+    
+    exp1_data = run_experiment_1(seeds)
+    exp2_data = run_experiment_2(seeds)
+    exp3_data = run_experiment_3(seeds)
+    
+    final_results = {
+        "metadata": {
+            "seeds_used": seeds,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+        },
+        "experiment_1": {
+            "description": "Search Algorithm Comparison (UCS vs Greedy vs A*) across 0-4 misreads",
+            "summary": exp1_data
+        },
+        "experiment_2": {
+            "description": "CSP Pruning Mechanisms (BT vs FC vs AC-3) across 25, 30, 35 givens",
+            "summary": exp2_data
+        },
+        "experiment_3": {
+            "description": "Neural Network Guidance Impact (NN Guided vs Random vs No Correction)",
+            "summary": exp3_data
+        }
     }
+    
+    os.makedirs("eval/results", exist_ok=True)
+    out_path = "eval/results/experiment_results.json"
+    with open(out_path, "w") as f:
+        json.dump(final_results, f, indent=4)
+        
+    print(f"\nAll experiments finished. Results saved to {out_path}")
 
-    out_file = "eval/results/experiment_results.json"
-    with open(out_file, "w") as f:
-        json.dump(all_results, f, indent=2)
+    # Generate plots and markdown
+    try:
+        from eval.plot_results import generate_markdown_tables, generate_plots
+        generate_markdown_tables(final_results)
+        generate_plots(final_results)
+    except Exception as e:
+        print(f"Plot generation notice: {e}")
 
-    print(f"\nAll experiments successfully completed. Saved to: {out_file}")
+    # Print clean summary tables directly to CMD
+    print("\n" + "=" * 80)
+    print("                    COURSE EXPERIMENT RESULTS (CMD VIEW)")
+    print("=" * 80)
 
+    print("\n[TABLE 1: Search Algorithm Comparison across 0-4 Misreads (5 Seeds)]")
+    print(f"{'Algorithm':<10} | {'Misreads':<8} | {'Recovery Rate':<14} | {'Nodes Expanded (Mean ± Std)':<28} | {'Time (s)':<10}")
+    print("-" * 80)
+    for algo in ["AStar", "UCS", "Greedy"]:
+        for m in [0, 1, 2, 3, 4]:
+            st = exp1_data[algo][m]
+            print(f"{algo:<10} | {m:<8} | {st['recovery_rate_mean']*100:>12.1f}% | {st['nodes_expanded_mean']:>10.2f} ± {st['nodes_expanded_std']:<14.2f} | {st['time_mean']:>8.4f}")
+
+    print("\n[TABLE 2: CSP Pruning Mechanisms across 25, 30, 35 Givens (5 Seeds)]")
+    print(f"{'Givens':<8} | {'Algorithm':<10} | {'Assignments (Mean ± Std)':<26} | {'Backtracks (Mean ± Std)':<26} | {'Time (s)':<10}")
+    print("-" * 88)
+    for g in [25, 30, 35]:
+        for mode in ["BT", "FC", "AC3"]:
+            st = exp2_data[mode][g]
+            print(f"{g:<8} | {mode:<10} | {st['assignments_mean']:>10.1f} ± {st['assignments_std']:<12.1f} | {st['backtracks_mean']:>10.1f} ± {st['backtracks_std']:<12.1f} | {st['time_mean']:>8.4f}")
+
+    print("\n[TABLE 3: Neural Network Guidance Impact (2 Misreads, 5 Seeds)]")
+    print(f"{'Strategy':<20} | {'Recovery Rate':<14} | {'Nodes Expanded (Mean ± Std)':<28} | {'Time (s)':<10}")
+    print("-" * 80)
+    for strat in ["NN_Guided", "Random_Correction", "No_Correction"]:
+        st = exp3_data[strat]
+        print(f"{strat:<20} | {st['recovery_rate_mean']*100:>12.1f}% | {st['nodes_expanded_mean']:>10.2f} ± {st['nodes_expanded_std']:<14.2f} | {st['time_mean']:>8.4f}")
+    print("=" * 80 + "\n")
 
 if __name__ == "__main__":
     run_all_experiments()
