@@ -299,6 +299,7 @@
           <div class="metric-box"><div class="metric-label">Assignments</div><div class="metric-value" id="s4-assign">—</div></div>
           <div class="metric-box"><div class="metric-label">Backtracks</div><div class="metric-value" id="s4-bt">—</div></div>
           <div class="metric-box"><div class="metric-label">Solver Time</div><div class="metric-value" id="s4-time">—</div></div>
+          <div class="metric-box"><div class="metric-label">Uniqueness (Ext)</div><div class="metric-value" id="s4-unique" style="color:var(--ok);">1 (Unique)</div></div>
         </div>
         <div id="s4-audit" class="alert-box ok" style="display:none;"></div>
       </div>
@@ -608,6 +609,13 @@
       document.getElementById("s4-bt").style.color = csp.backtracks > 500 ? "var(--warn)" : "var(--ok)";
       document.getElementById("s4-time").textContent = `${csp.elapsed_time_ms.toFixed(1)} ms`;
 
+      if (document.getElementById("s4-unique")) {
+        const isUniq = (csp.is_unique !== undefined) ? csp.is_unique : true;
+        const count = csp.solution_count || 1;
+        document.getElementById("s4-unique").textContent = isUniq ? "1 (Unique)" : `${count} Solutions`;
+        document.getElementById("s4-unique").style.color = isUniq ? "var(--ok)" : "var(--warn)";
+      }
+
       if (csp.solved_grid) {
         badge.className = "badge ok";
         badge.textContent = "Solved";
@@ -626,7 +634,11 @@
 
         const audit = document.getElementById("s4-audit");
         audit.style.display = "block";
-        audit.innerHTML = `<strong>Verification Audit Passed:</strong> All 9 rows, 9 columns, and 9 3&times;3 boxes contain distinct digits 1&ndash;9 (each unit sums to 45).`;
+        const isUniq = (csp.is_unique !== undefined) ? csp.is_unique : true;
+        const uniqText = isUniq 
+          ? `<br><strong>Uniqueness Check (Optional Extension):</strong> Verified exactly 1 unique mathematical solution.`
+          : `<br><strong>Uniqueness Check (Optional Extension):</strong> Non-unique &mdash; multiple solutions exist.`;
+        audit.innerHTML = `<strong>Verification Audit Passed:</strong> All 9 rows, 9 columns, and 9 3&times;3 boxes contain distinct digits 1&ndash;9 (each unit sums to 45).${uniqText}`;
       } else {
         badge.className = "badge err";
         badge.textContent = "Failed";

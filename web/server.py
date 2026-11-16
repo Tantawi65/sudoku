@@ -292,6 +292,9 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
     solver = UnifiedCSPSolver(mode=sel_mode)
     solved_board = solver.solve(csp_solve)
 
+    # Optional Extension: Verify single unique solution
+    sol_count = solver.count_solutions(SudokuCSP(grid), max_count=2)
+
     mode_label = "BT + FC (Forward Checking + MRV)" if sel_mode == "FC" else ("BT alone (Pure Backtracking)" if sel_mode == "BT" else "BT + FC + AC-3 (AC-3 Pre-check + FC)")
 
     return {
@@ -319,7 +322,9 @@ def run_live_scenario(scenario_id: str, search_algo: str = "astar", csp_mode: st
             "assignments": int(solver.assignments),
             "backtracks": int(solver.backtracks),
             "elapsed_time_ms": float(solver.elapsed_time * 1000.0),
-            "solved_grid": solved_board
+            "solved_grid": solved_board,
+            "solution_count": int(sol_count),
+            "is_unique": bool(sol_count == 1)
         }
     }
 
